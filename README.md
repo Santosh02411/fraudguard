@@ -60,3 +60,54 @@ fraudguard/
 │
 └── README.md
 ```
+
+---
+
+## 🚀 How to Run (Step by Step)
+
+### Step 1 — Install backend dependencies
+
+Open a terminal, navigate to the project folder, then:
+
+```bash
+cd backend
+npm install
+```
+
+### Step 2 — Start the backend server
+
+```bash
+# Still inside the backend/ folder:
+npm start
+```
+
+You should see:
+```
+✅ Admin user created: admin / admin123
+🛡️  FraudGuard Backend running on http://localhost:5000
+📊 API: http://localhost:5000/api/health
+```
+
+> ✅ Keep this terminal open. The backend must stay running.
+
+---
+
+### Step 3 — Install frontend dependencies
+
+Open a **second terminal**, navigate to the project folder, then:
+
+```bash
+cd frontend
+npm install
+```
+
+> ⚠️ This takes 2–5 minutes the first time. That's normal.
+
+### Step 4 — Start the frontend
+
+```bash
+# Still inside the frontend/ folder:
+npm start
+```
+
+Your browser should automatically open at **http://localhost:3000**
