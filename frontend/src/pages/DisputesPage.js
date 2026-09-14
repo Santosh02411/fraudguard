@@ -1,0 +1,308 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { api, useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import {
+  Scale, CheckCircle, XCircle, Clock, FileText, RefreshCw, Filter, X,
+} from 'lucide-react';
+import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
+
+const STATUS_LABEL = {
+  opened: 'Opened',
+  evidence_submitted: 'Evidence Submitted',
+  won: 'Won',
+  lost: 'Lost',
+};
+const STATUS_STYLE = {
+  opened: 'bg-yellow-500/15 text-yellow-400',
+  evidence_submitted: 'bg-blue-500/15 text-blue-400',
+  won: 'bg-green-500/15 text-green-400',
+  lost: 'bg-red-500/15 text-red-400',
+};
+// The next legal step(s) from a given status — mirrors
+// disputeRepository.js's TRANSITIONS so the UI never offers a button
+// the API would reject.
+const NEXT_STEPS = {
+  opened: ['evidence_submitted', 'won', 'lost'],
+  evidence_submitted: ['won', 'lost'],
+  won: [],
+  lost: [],
+};
+
+function StatusBadge({ status }) {
+  return <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
+}
+
+function SummaryCard({ title, value, color }) {
+  return (
+    <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+      <p className="text-gray-400 text-xs sm:text-sm mb-1">{title}</p>
+      <p className={`text-xl sm:text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
+    </div>
+  );
+}
+
+/**
+ * Case management for chargebacks/disputes (feature: dispute tracking —
+ * see backend/models/disputeRepository.js's header for why this is
+ * separate from an alert's verdict). A dispute is opened from a
+ * transaction's detail page; this page is where it's tracked and, for
+ * admins, worked through to a resolution.
+ */
+export default function DisputesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  const [disputes, setDisputes] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Inline "advance status" form — only one case's form is open at a
+  // time, tracked by id, same pattern as AlertsPage's resolve form.
+  const [transitioningId, setTransitioningId] = useState(null);
+  const [note, setNote] = useState('');
+  const [transitionError, setTransitionError] = useState('');
+  const [busyId, setBusyId] = useState(null);
+
+  const load = useCallback((activeStatus = status) => {
+    setLoading(true);
+    setError('');
+    const params = activeStatus ? { status: activeStatus } : {};
+    const requests = [api.get('/disputes', { params })];
+    if (isAdmin) requests.push(api.get('/disputes/financial-summary'));
+
+    Promise.all(requests)
+      .then(([disputesRes, summaryRes]) => {
+        setDisputes(disputesRes.data.disputes);
+        if (summaryRes) setSummary(summaryRes.data);
+      })
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load disputes'))
+      .finally(() => setLoading(false));
+  }, [status, isAdmin]);
+
+  useEffect(() => { load(''); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const applyFilter = (e) => {
+    e.preventDefault();
+    load(status);
+  };
+
+  const clearFilter = () => {
+    setStatus('');
+    load('');
+  };
+
+  const startTransitioning = (id) => {
+    setTransitioningId(id);
+    setNote('');
+    setTransitionError('');
+  };
+
+  const submitTransition = async (id, nextStatus) => {
+    setBusyId(id);
+    setTransitionError('');
+    try {
+      const { data } = await api.patch(`/disputes/${id}`, { status: nextStatus, note: note || undefined });
+      setDisputes(prev => prev.map(d => (d.id === id ? data.dispute : d)));
+      setTransitioningId(null);
+      if (isAdmin) {
+        api.get('/disputes/financial-summary').then(res => setSummary(res.data)).catch(() => {});
+      }
+    } catch (err) {
+      setTransitionError(err.response?.data?.error || 'Failed to update the dispute');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const activeFilterCount = status ? 1 : 0;
+
+  return (
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto">
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Disputes</h1>
+          <p className="text-gray-400 mt-1">Chargeback and dispute case tracking</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
+              activeFilterCount > 0 ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'
+            }`}
+          >
+            <Filter size={16} /> Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+          </button>
+          <button
+            onClick={() => load(status)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {isAdmin && summary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <SummaryCard title="Total Disputes" value={summary.total_disputes} />
+          <SummaryCard title="Amount Won" value={`$${summary.amount_won.toFixed(2)}`} color="text-green-400" />
+          <SummaryCard title="Amount Lost" value={`$${summary.amount_lost.toFixed(2)}`} color="text-red-400" />
+          <SummaryCard
+            title="Win Rate"
+            value={summary.win_rate === null ? '—' : `${summary.win_rate}%`}
+            color={summary.win_rate !== null && summary.win_rate < 50 ? 'text-yellow-400' : 'text-green-400'}
+          />
+        </div>
+      )}
+
+      {showFilters && (
+        <form onSubmit={applyFilter} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Status</label>
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+              className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+            >
+              <option value="">All</option>
+              <option value="opened">Opened</option>
+              <option value="evidence_submitted">Evidence Submitted</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+          </div>
+          <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+            Apply
+          </button>
+          {activeFilterCount > 0 && (
+            <button type="button" onClick={clearFilter} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2">
+              <X size={14} /> Clear
+            </button>
+          )}
+        </form>
+      )}
+
+      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+        <div className="p-6 border-b border-white/10">
+          <h2 className="text-lg font-semibold text-white">
+            Cases
+            {!loading && !error && <span className="ml-2 text-gray-500 text-sm font-normal">({disputes.length} total)</span>}
+          </h2>
+        </div>
+
+        {loading ? (
+          <LoadingState label="Loading disputes..." />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => load(status)} />
+        ) : disputes.length === 0 ? (
+          <EmptyState icon={Scale} title="No disputes match these filters" subtitle={activeFilterCount > 0 ? 'Try clearing a filter.' : 'Open a dispute from a transaction\u2019s detail page.'} />
+        ) : (
+          <div className="divide-y divide-white/5">
+            {disputes.map(dispute => {
+              const nextSteps = NEXT_STEPS[dispute.status] || [];
+              return (
+                <div key={dispute.id} className="p-6 hover:bg-white/5 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
+                        <Scale size={20} className="text-purple-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <StatusBadge status={dispute.status} />
+                          {(dispute.account_username || dispute.opened_by_username) && (
+                            <span className="text-xs text-gray-500">
+                              {dispute.account_username ? `on ${dispute.account_username}'s account` : `opened by ${dispute.opened_by_username}`}
+                            </span>
+                          )}
+                        </div>
+                        {dispute.reason && <p className="text-white text-sm">{dispute.reason}</p>}
+                        {dispute.evidence_note && (
+                          <p className="text-gray-400 text-xs mt-1 flex items-start gap-1">
+                            <FileText size={12} className="mt-0.5 shrink-0" /> {dispute.evidence_note}
+                          </p>
+                        )}
+                        {dispute.resolution_note && (
+                          <p className="text-gray-400 text-xs mt-1 italic">&ldquo;{dispute.resolution_note}&rdquo;</p>
+                        )}
+                        <p className="text-gray-500 text-xs mt-1 flex items-center gap-1">
+                          <Clock size={12} /> Opened {new Date(dispute.opened_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 pl-14 sm:pl-0">
+                      <Link to={`/transactions/${dispute.transaction_id}`} className="text-right hover:underline">
+                        <span className="text-white font-semibold block">${Number(dispute.amount_disputed).toFixed(2)}</span>
+                        <span className="text-gray-400 text-xs">{dispute.merchant}</span>
+                      </Link>
+                      {isAdmin && nextSteps.length > 0 && transitioningId !== dispute.id && (
+                        <button
+                          onClick={() => startTransitioning(dispute.id)}
+                          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
+                        >
+                          Update
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {transitioningId === dispute.id && (
+                    <div className="mt-4 ml-0 sm:ml-14 bg-black/20 rounded-lg p-4">
+                      <label className="block text-xs text-gray-400 mb-1">Note (optional)</label>
+                      <textarea
+                        value={note}
+                        onChange={e => setNote(e.target.value)}
+                        rows={2}
+                        maxLength={2000}
+                        placeholder="Evidence submitted, outcome details, etc."
+                        className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+                      />
+                      {transitionError && <p className="text-red-400 text-xs mb-3">{transitionError}</p>}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {nextSteps.includes('evidence_submitted') && (
+                          <button
+                            onClick={() => submitTransition(dispute.id, 'evidence_submitted')}
+                            disabled={busyId === dispute.id}
+                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
+                          >
+                            <FileText size={14} /> Evidence Submitted
+                          </button>
+                        )}
+                        {nextSteps.includes('won') && (
+                          <button
+                            onClick={() => submitTransition(dispute.id, 'won')}
+                            disabled={busyId === dispute.id}
+                            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
+                          >
+                            <CheckCircle size={14} /> Won
+                          </button>
+                        )}
+                        {nextSteps.includes('lost') && (
+                          <button
+                            onClick={() => submitTransition(dispute.id, 'lost')}
+                            disabled={busyId === dispute.id}
+                            className="flex items-center gap-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
+                          >
+                            <XCircle size={14} /> Lost
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setTransitioningId(null)}
+                          className="text-gray-400 hover:text-white text-sm px-3 py-1.5"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
