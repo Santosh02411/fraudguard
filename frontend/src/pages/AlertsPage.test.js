@@ -5,10 +5,11 @@ import AlertsPage from './AlertsPage';
 
 const mockGet = jest.fn();
 const mockPatch = jest.fn();
+let mockUser = { id: 1, username: 'test_user', role: 'user' };
 
 jest.mock('../context/AuthContext', () => ({
   api: { get: (...args) => mockGet(...args), patch: (...args) => mockPatch(...args) },
-  useAuth: () => ({ user: { id: 1, username: 'test_user', role: 'user' } }),
+  useAuth: () => ({ user: mockUser }),
 }));
 
 jest.mock('../context/SocketContext', () => ({
@@ -45,6 +46,7 @@ function makeAlert(overrides = {}) {
 beforeEach(() => {
   mockGet.mockReset();
   mockPatch.mockReset();
+  mockUser = { id: 1, username: 'test_user', role: 'user' };
   window.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
   window.URL.revokeObjectURL = jest.fn();
 });
@@ -321,5 +323,54 @@ describe('AlertsPage — CSV export', () => {
     fireEvent.click(screen.getByRole('button', { name: /export csv/i }));
 
     expect(await screen.findByText(/failed to export alerts/i)).toBeInTheDocument();
+  });
+
+  test('any user can request a plain-language explanation, and it is only fetched once per alert', async () => {
+    mockGet.mockImplementation((url) => {
+      if (url === '/alerts/1/explanation') return Promise.resolve({ data: { explanation: 'Flagged for an unusually large purchase from a new device.', cached: false } });
+      return Promise.resolve({
+        data: { alerts: [makeAlert({ id: 1 })], pagination: { page: 1, limit: 20, total: 1, total_pages: 1, has_next: false, has_prev: false } },
+      });
+    });
+
+    renderPage();
+    await screen.findByText(/High risk transaction detected/);
+
+    fireEvent.click(screen.getByTitle('Explain in plain language'));
+    expect(await screen.findByText(/Flagged for an unusually large purchase/)).toBeInTheDocument();
+    expect(mockGet).toHaveBeenCalledWith('/alerts/1/explanation');
+
+    // collapse, then reopen — should use the cached value, not refetch
+    fireEvent.click(screen.getByTitle('Explain in plain language'));
+    expect(screen.queryByText(/Flagged for an unusually large purchase/)).not.toBeInTheDocument();
+    mockGet.mockClear();
+    fireEvent.click(screen.getByTitle('Explain in plain language'));
+    expect(await screen.findByText(/Flagged for an unusually large purchase/)).toBeInTheDocument();
+    expect(mockGet).not.toHaveBeenCalledWith('/alerts/1/explanation');
+  });
+
+  test('a regular user does not see the audit trail button, but an admin does and can view it', async () => {
+    mockGet.mockImplementation((url) => {
+      if (url === '/admin/audit-logs/alert/1') {
+        return Promise.resolve({
+          data: { logs: [{ id: 9, action: 'alerts.resolve', username: 'admin', created_at: '2026-01-02T00:00:00Z', outcome: 'success' }] },
+        });
+      }
+      return Promise.resolve({
+        data: { alerts: [makeAlert({ id: 1 })], pagination: { page: 1, limit: 20, total: 1, total_pages: 1, has_next: false, has_prev: false } },
+      });
+    });
+
+    renderPage();
+    await screen.findByText(/High risk transaction detected/);
+    expect(screen.queryByTitle("View this alert's audit trail")).not.toBeInTheDocument();
+
+    mockUser = { id: 9, username: 'admin_user', role: 'admin' };
+    renderPage();
+    await screen.findAllByText(/High risk transaction detected/);
+
+    fireEvent.click(screen.getAllByTitle("View this alert's audit trail")[0]);
+    expect(await screen.findByText('alerts.resolve')).toBeInTheDocument();
+    expect(screen.getByText(/by admin/)).toBeInTheDocument();
   });
 });

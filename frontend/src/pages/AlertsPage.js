@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import {
   AlertTriangle, CheckCircle, XCircle, RefreshCw, ChevronLeft, ChevronRight,
   Wifi, WifiOff, UserPlus, UserMinus, Filter, X, Download, Square, CheckSquare, FileText,
+  Lightbulb, History,
 } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
@@ -59,6 +60,21 @@ export default function AlertsPage() {
   // time, same pattern as resolvingId above.
   const [sarMenuId, setSarMenuId] = useState(null);
   const [sarBusyId, setSarBusyId] = useState(null);
+
+  // Plain-language explanation (feature: LLM-generated plain-language
+  // explanations) — one sentence per alert, fetched on demand and cached
+  // both server-side (on the transaction row) and here (so re-toggling
+  // open/closed doesn't re-fetch).
+  const [explanations, setExplanations] = useState({}); // id -> text
+  const [explainBusyId, setExplainBusyId] = useState(null);
+  const [explainError, setExplainError] = useState({}); // id -> message
+  const [openExplanationId, setOpenExplanationId] = useState(null);
+
+  // Per-alert audit trail (admin only) — who viewed/assigned/resolved
+  // this specific alert, and when.
+  const [auditTrails, setAuditTrails] = useState({}); // id -> logs[]
+  const [auditBusyId, setAuditBusyId] = useState(null);
+  const [openAuditId, setOpenAuditId] = useState(null);
 
   const loadAlerts = (targetPage = page, activeFilters = filters) => {
     setLoading(true);
@@ -202,6 +218,44 @@ export default function AlertsPage() {
       setError('Failed to generate the SAR report');
     } finally {
       setSarBusyId(null);
+    }
+  };
+
+  const toggleExplanation = async (alertId) => {
+    if (openExplanationId === alertId) {
+      setOpenExplanationId(null);
+      return;
+    }
+    setOpenExplanationId(alertId);
+    if (explanations[alertId]) return; // already fetched — cached client-side too
+    setExplainBusyId(alertId);
+    setExplainError(prev => ({ ...prev, [alertId]: undefined }));
+    try {
+      const { data } = await api.get(`/alerts/${alertId}/explanation`);
+      setExplanations(prev => ({ ...prev, [alertId]: data.explanation }));
+    } catch (err) {
+      setExplainError(prev => ({ ...prev, [alertId]: err.response?.data?.error || 'Failed to generate an explanation' }));
+    } finally {
+      setExplainBusyId(null);
+    }
+  };
+
+  const toggleAuditTrail = async (alertId) => {
+    if (openAuditId === alertId) {
+      setOpenAuditId(null);
+      return;
+    }
+    setOpenAuditId(alertId);
+    if (auditTrails[alertId]) return;
+    setAuditBusyId(alertId);
+    try {
+      const { data } = await api.get(`/admin/audit-logs/alert/${alertId}`);
+      setAuditTrails(prev => ({ ...prev, [alertId]: data.logs }));
+    } catch (err) {
+      // non-critical, secondary info — fail quietly with an empty list
+      setAuditTrails(prev => ({ ...prev, [alertId]: [] }));
+    } finally {
+      setAuditBusyId(null);
     }
   };
 
@@ -404,6 +458,28 @@ export default function AlertsPage() {
                       <span className="text-gray-400 text-xs">{alertItem.merchant}</span>
                     </Link>
                     <div className="flex items-center gap-2 relative">
+                      <button
+                        onClick={() => toggleExplanation(alertItem.id)}
+                        disabled={explainBusyId === alertItem.id}
+                        title="Explain in plain language"
+                        className={`p-2 rounded-lg disabled:opacity-50 transition-colors ${
+                          openExplanationId === alertItem.id ? 'bg-purple-600 text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                        }`}
+                      >
+                        <Lightbulb size={14} />
+                      </button>
+                      {user?.role === 'admin' && (
+                        <button
+                          onClick={() => toggleAuditTrail(alertItem.id)}
+                          disabled={auditBusyId === alertItem.id}
+                          title="View this alert's audit trail"
+                          className={`p-2 rounded-lg disabled:opacity-50 transition-colors ${
+                            openAuditId === alertItem.id ? 'bg-purple-600 text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                          }`}
+                        >
+                          <History size={14} />
+                        </button>
+                      )}
                       {user?.role === 'admin' && alertItem.status !== 'resolved' && (
                         <button
                           onClick={() => toggleAssignToMe(alertItem)}
@@ -455,6 +531,42 @@ export default function AlertsPage() {
                     </div>
                   </div>
                 </div>
+
+                {openExplanationId === alertItem.id && (
+                  <div className="mt-4 ml-0 sm:ml-14 bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-2">
+                    <Lightbulb size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                    {explainBusyId === alertItem.id ? (
+                      <p className="text-gray-400 text-sm">Generating an explanation...</p>
+                    ) : explainError[alertItem.id] ? (
+                      <p className="text-red-400 text-sm">{explainError[alertItem.id]}</p>
+                    ) : (
+                      <p className="text-blue-200 text-sm">{explanations[alertItem.id]}</p>
+                    )}
+                  </div>
+                )}
+
+                {openAuditId === alertItem.id && (
+                  <div className="mt-4 ml-0 sm:ml-14 bg-black/20 rounded-lg p-4">
+                    {auditBusyId === alertItem.id ? (
+                      <p className="text-gray-400 text-sm">Loading audit trail...</p>
+                    ) : !auditTrails[alertItem.id]?.length ? (
+                      <p className="text-gray-500 text-sm">No audit events recorded for this alert yet.</p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {auditTrails[alertItem.id].map(log => (
+                          <li key={log.id} className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-2">
+                            <span className="text-gray-300 font-mono">{log.action}</span>
+                            <span>by {log.username || 'unknown'}</span>
+                            <span className="text-gray-600">— {new Date(log.created_at).toLocaleString()}</span>
+                            <span className={log.outcome === 'success' ? 'text-green-400' : log.outcome === 'denied' ? 'text-red-400' : 'text-yellow-400'}>
+                              {log.outcome}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
 
                 {resolvingId === alertItem.id && (
                   <div className="mt-4 ml-0 sm:ml-14 bg-black/20 rounded-lg p-4">
