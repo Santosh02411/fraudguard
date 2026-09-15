@@ -287,6 +287,19 @@ router.post('/fraud-rules', validate({ body: adminSchemas.fraudRuleCreateBody })
   res.status(201).json({ message: 'Rule created', rule });
 }));
 
+// POST /api/admin/fraud-rules/preview — feature: rule impact preview.
+// Dry-runs a candidate rule (same body shape as create — rule_type plus
+// value or threshold) against transactions already on file, WITHOUT
+// creating it, so an admin can see how broad a new blacklist entry or a
+// lower amount cap would actually be before turning it on. Registered
+// before PATCH/DELETE .../:id below, but that's moot anyway since this
+// is POST to a literal "preview" segment, never confusable with a
+// numeric :id regardless of method.
+router.post('/fraud-rules/preview', validate({ body: adminSchemas.fraudRuleCreateBody }), asyncHandler(async (req, res) => {
+  const { matched_count, sample } = await fraudRuleRepository.previewImpact(req.body);
+  res.json({ matched_count, sample });
+}));
+
 // PATCH /api/admin/fraud-rules/:id — edit or enable/disable a rule.
 router.patch('/fraud-rules/:id', validate({ params: adminSchemas.idParam, body: adminSchemas.fraudRuleUpdateBody }), asyncHandler(async (req, res) => {
   const existing = await fraudRuleRepository.findById(req.params.id);
