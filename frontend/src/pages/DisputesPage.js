@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api, useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
-  Scale, CheckCircle, XCircle, Clock, FileText, RefreshCw, Filter, X,
+  Scale, CheckCircle, XCircle, Clock, FileText, RefreshCw, Filter, X, Plus, Download,
 } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
+import { downloadBlobResponse } from '../utils/download';
 
 const STATUS_LABEL = {
   opened: 'Opened',
@@ -58,6 +59,7 @@ export default function DisputesPage() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Inline "advance status" form — only one case's form is open at a
   // time, tracked by id, same pattern as AlertsPage's resolve form.
@@ -65,6 +67,16 @@ export default function DisputesPage() {
   const [note, setNote] = useState('');
   const [transitionError, setTransitionError] = useState('');
   const [busyId, setBusyId] = useState(null);
+
+  // Open a new dispute without needing to go through a specific
+  // transaction's detail page first — pick from a list of the caller's
+  // own eligible (not already disputed) transactions instead.
+  const [showOpenForm, setShowOpenForm] = useState(false);
+  const [openTxnOptions, setOpenTxnOptions] = useState(null); // null = not loaded yet
+  const [openTxnLoading, setOpenTxnLoading] = useState(false);
+  const [openForm, setOpenForm] = useState({ transaction_id: '', reason: '', amount_disputed: '' });
+  const [openFormError, setOpenFormError] = useState('');
+  const [openFormBusy, setOpenFormBusy] = useState(false);
 
   const load = useCallback((activeStatus = status) => {
     setLoading(true);
@@ -94,6 +106,19 @@ export default function DisputesPage() {
     load('');
   };
 
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const params = status ? { status } : {};
+      const res = await api.get('/disputes/export', { params, responseType: 'blob' });
+      downloadBlobResponse(res, 'disputes.csv');
+    } catch (err) {
+      setError('Failed to export disputes');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const startTransitioning = (id) => {
     setTransitioningId(id);
     setNote('');
@@ -119,6 +144,44 @@ export default function DisputesPage() {
 
   const activeFilterCount = status ? 1 : 0;
 
+  const openNewDisputeForm = async () => {
+    setShowOpenForm(true);
+    setOpenFormError('');
+    if (openTxnOptions !== null) return; // already fetched this session
+    setOpenTxnLoading(true);
+    try {
+      const { data } = await api.get('/transactions', { params: { limit: 50 } });
+      const alreadyDisputed = new Set(disputes.map(d => d.transaction_id));
+      setOpenTxnOptions(data.transactions.filter(t => !alreadyDisputed.has(t.id)));
+    } catch (err) {
+      setOpenFormError('Failed to load transactions');
+      setOpenTxnOptions([]);
+    } finally {
+      setOpenTxnLoading(false);
+    }
+  };
+
+  const submitOpenDispute = async (e) => {
+    e.preventDefault();
+    setOpenFormBusy(true);
+    setOpenFormError('');
+    try {
+      const body = { transaction_id: Number(openForm.transaction_id), reason: openForm.reason };
+      if (openForm.amount_disputed) body.amount_disputed = Number(openForm.amount_disputed);
+      const { data } = await api.post('/disputes', body);
+      setDisputes(prev => [data.dispute, ...prev]);
+      setShowOpenForm(false);
+      setOpenForm({ transaction_id: '', reason: '', amount_disputed: '' });
+      setOpenTxnOptions(prev => (prev || []).filter(t => t.id !== data.dispute.transaction_id));
+    } catch (err) {
+      setOpenFormError(err.response?.data?.error || 'Failed to open dispute');
+    } finally {
+      setOpenFormBusy(false);
+    }
+  };
+
+  const selectedTxn = openTxnOptions?.find(t => t.id === Number(openForm.transaction_id));
+
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -128,12 +191,25 @@ export default function DisputesPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={openNewDisputeForm}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            <Plus size={16} /> Open a Dispute
+          </button>
+          <button
             onClick={() => setShowFilters(v => !v)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
               activeFilterCount > 0 ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'
             }`}
           >
             <Filter size={16} /> Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+          </button>
+          <button
+            onClick={exportCsv}
+            disabled={exporting}
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            <Download size={16} /> {exporting ? 'Exporting...' : 'Export CSV'}
           </button>
           <button
             onClick={() => load(status)}
@@ -143,6 +219,72 @@ export default function DisputesPage() {
           </button>
         </div>
       </div>
+
+      {showOpenForm && (
+        <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-white font-semibold text-sm">Open a Dispute</h2>
+            <button onClick={() => setShowOpenForm(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
+          </div>
+          {openTxnLoading ? (
+            <p className="text-gray-500 text-sm">Loading your transactions...</p>
+          ) : openTxnOptions?.length === 0 && !openFormError ? (
+            <p className="text-gray-500 text-sm">No eligible transactions — every recent transaction already has a dispute, or you have none yet.</p>
+          ) : (
+            <form onSubmit={submitOpenDispute}>
+              <div className="mb-3">
+                <label className="block text-xs text-gray-400 mb-1">Transaction</label>
+                <select
+                  required
+                  value={openForm.transaction_id}
+                  onChange={e => setOpenForm(f => ({ ...f, transaction_id: e.target.value }))}
+                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                >
+                  <option value="">Select a transaction…</option>
+                  {(openTxnOptions || []).map(t => (
+                    <option key={t.id} value={t.id}>
+                      #{t.id} — {t.merchant} — ${Number(t.amount).toFixed(2)} — {new Date(t.created_at).toLocaleDateString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-3">
+                <label className="block text-xs text-gray-400 mb-1">Why are you disputing this charge?</label>
+                <textarea
+                  required
+                  minLength={1}
+                  maxLength={500}
+                  rows={2}
+                  value={openForm.reason}
+                  onChange={e => setOpenForm(f => ({ ...f, reason: e.target.value }))}
+                  placeholder="I don't recognize this charge / item never arrived / billed twice, etc."
+                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <div className="mb-3">
+                <label className="block text-xs text-gray-400 mb-1">
+                  Amount to dispute <span className="text-gray-600">{selectedTxn ? `(optional — defaults to the full $${Number(selectedTxn.amount).toFixed(2)})` : '(optional)'}</span>
+                </label>
+                <input
+                  type="number" step="0.01" min="0.01" max={selectedTxn?.amount}
+                  value={openForm.amount_disputed}
+                  onChange={e => setOpenForm(f => ({ ...f, amount_disputed: e.target.value }))}
+                  placeholder={selectedTxn ? Number(selectedTxn.amount).toFixed(2) : undefined}
+                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              {openFormError && <p className="text-red-400 text-xs mb-3">{openFormError}</p>}
+              <button
+                type="submit"
+                disabled={openFormBusy}
+                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                {openFormBusy ? 'Submitting...' : 'Submit Dispute'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
       {isAdmin && summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -197,7 +339,7 @@ export default function DisputesPage() {
         ) : error ? (
           <ErrorState message={error} onRetry={() => load(status)} />
         ) : disputes.length === 0 ? (
-          <EmptyState icon={Scale} title="No disputes match these filters" subtitle={activeFilterCount > 0 ? 'Try clearing a filter.' : 'Open a dispute from a transaction\u2019s detail page.'} />
+          <EmptyState icon={Scale} title="No disputes match these filters" subtitle={activeFilterCount > 0 ? 'Try clearing a filter.' : 'Use "Open a Dispute" above, or start from a transaction\u2019s detail page.'} />
         ) : (
           <div className="divide-y divide-white/5">
             {disputes.map(dispute => {

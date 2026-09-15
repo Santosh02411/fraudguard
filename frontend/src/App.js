@@ -9,6 +9,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import NewTransactionPage from './pages/NewTransactionPage';
+import BulkImportPage from './pages/BulkImportPage';
 import TransactionsPage from './pages/TransactionsPage';
 import TransactionDetailPage from './pages/TransactionDetailPage';
 import AlertsPage from './pages/AlertsPage';
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<PrivateRoute><Layout><DashboardPage /></Layout></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Layout><SettingsPage /></Layout></PrivateRoute>} />
       <Route path="/new-transaction" element={<PrivateRoute><Layout><NewTransactionPage /></Layout></PrivateRoute>} />
+      <Route path="/bulk-import" element={<PrivateRoute><Layout><BulkImportPage /></Layout></PrivateRoute>} />
       <Route path="/transactions" element={<PrivateRoute><Layout><TransactionsPage /></Layout></PrivateRoute>} />
       <Route path="/transactions/:id" element={<PrivateRoute><Layout><TransactionDetailPage /></Layout></PrivateRoute>} />
       <Route path="/alerts" element={<PrivateRoute><Layout><AlertsPage /></Layout></PrivateRoute>} />

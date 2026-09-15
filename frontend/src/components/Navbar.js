@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, LayoutDashboard, PlusCircle, List, Bell, Scale, BarChart2, Settings, LogOut, Radio, Menu, X, UserCog } from 'lucide-react';
+import { Shield, LayoutDashboard, PlusCircle, List, Bell, Scale, BarChart2, Settings, LogOut, Radio, Menu, X, UserCog, Upload } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -25,6 +26,9 @@ export default function Navbar() {
       </NavLink>
       <NavLink to="/new-transaction" className={navClass} onClick={() => setMobileOpen(false)}>
         <PlusCircle size={16} /> New Transaction
+      </NavLink>
+      <NavLink to="/bulk-import" className={navClass} onClick={() => setMobileOpen(false)}>
+        <Upload size={16} /> Bulk Import
       </NavLink>
       <NavLink to="/transactions" className={navClass} onClick={() => setMobileOpen(false)}>
         <List size={16} /> Transactions
@@ -62,6 +66,7 @@ export default function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <NotificationBell />
           <span className="hidden sm:inline text-gray-400 text-sm">{user?.username}</span>
           <NavLink
             to="/settings"

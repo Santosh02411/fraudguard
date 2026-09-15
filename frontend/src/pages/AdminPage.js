@@ -3,7 +3,7 @@ import { api } from '../context/AuthContext';
 import { useAuth } from '../context/AuthContext';
 import {
   ScrollText, Download, Code2, Webhook, Trash2, ShieldOff, ShieldCheck,
-  ShieldAlert, Network, Cpu, Users, Plus, X, RefreshCw,
+  ShieldAlert, Network, Cpu, Users, Plus, X, RefreshCw, Pencil,
 } from 'lucide-react';
 import { LoadingState, ErrorState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
@@ -70,6 +70,14 @@ export default function AdminPage() {
   const [ruleFormError, setRuleFormError] = useState('');
   const [ruleFormBusy, setRuleFormBusy] = useState(false);
   const [ruleBusyId, setRuleBusyId] = useState(null);
+
+  // In-place edit of an existing rule's value/threshold/reason
+  // (rule_type itself is immutable — see adminSchemas.fraudRuleUpdateBody,
+  // which doesn't accept it — so editing keeps the same type as create).
+  const [editingRuleId, setEditingRuleId] = useState(null);
+  const [editRuleForm, setEditRuleForm] = useState({ value: '', threshold: '', reason: '' });
+  const [editRuleError, setEditRuleError] = useState('');
+  const [editRuleBusy, setEditRuleBusy] = useState(false);
 
   // ML Ops — lazy-loaded on tab activation, with its own error state, so
   // ml_service being unreachable never blocks the rest of the admin panel
@@ -222,6 +230,34 @@ export default function AdminPage() {
       showMessage(err.response?.data?.error || 'Failed to delete rule');
     } finally {
       setRuleBusyId(null);
+    }
+  };
+
+  const startEditingRule = (rule) => {
+    setEditingRuleId(rule.id);
+    setEditRuleForm({
+      value: rule.rule_type === 'amount_cap' ? '' : rule.value,
+      threshold: rule.rule_type === 'amount_cap' ? String(rule.threshold) : '',
+      reason: rule.reason || '',
+    });
+    setEditRuleError('');
+  };
+
+  const submitEditRule = async (rule) => {
+    setEditRuleBusy(true);
+    setEditRuleError('');
+    try {
+      const body = { reason: editRuleForm.reason || undefined };
+      if (rule.rule_type === 'amount_cap') body.threshold = Number(editRuleForm.threshold);
+      else body.value = editRuleForm.value;
+
+      const { data } = await api.patch(`/admin/fraud-rules/${rule.id}`, body);
+      setFraudRules(prev => prev.map(r => (r.id === rule.id ? { ...r, ...data.rule } : r)));
+      setEditingRuleId(null);
+    } catch (err) {
+      setEditRuleError(err.response?.data?.error || 'Failed to update rule');
+    } finally {
+      setEditRuleBusy(false);
     }
   };
 
@@ -482,39 +518,100 @@ export default function AdminPage() {
                 {fraudRules.length === 0 ? (
                   <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No fraud rules configured</td></tr>
                 ) : fraudRules.map(rule => (
-                  <tr key={rule.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-3 text-white text-sm">{RULE_TYPE_LABEL[rule.rule_type] || rule.rule_type}</td>
-                    <td className="px-6 py-3 text-gray-300 text-sm font-mono">
-                      {rule.rule_type === 'amount_cap' ? `$${Number(rule.threshold).toLocaleString()}` : rule.value}
-                    </td>
-                    <td className="px-6 py-3 text-gray-400 text-sm max-w-xs truncate">{rule.reason || '—'}</td>
-                    <td className="px-6 py-3 text-gray-400 text-sm">{rule.updated_by_username || '—'}</td>
-                    <td className="px-6 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${rule.enabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                        {rule.enabled ? 'Enabled' : 'Disabled'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleRuleEnabled(rule)}
-                          disabled={ruleBusyId === rule.id}
-                          className="text-gray-400 hover:text-white disabled:opacity-50 transition-colors"
-                          title={rule.enabled ? 'Disable' : 'Enable'}
-                        >
-                          {rule.enabled ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
-                        </button>
-                        <button
-                          onClick={() => deleteRule(rule)}
-                          disabled={ruleBusyId === rule.id}
-                          className="text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
-                          title="Delete permanently"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <React.Fragment key={rule.id}>
+                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-3 text-white text-sm">{RULE_TYPE_LABEL[rule.rule_type] || rule.rule_type}</td>
+                      <td className="px-6 py-3 text-gray-300 text-sm font-mono">
+                        {rule.rule_type === 'amount_cap' ? `$${Number(rule.threshold).toLocaleString()}` : rule.value}
+                      </td>
+                      <td className="px-6 py-3 text-gray-400 text-sm max-w-xs truncate">{rule.reason || '—'}</td>
+                      <td className="px-6 py-3 text-gray-400 text-sm">{rule.updated_by_username || '—'}</td>
+                      <td className="px-6 py-3">
+                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${rule.enabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                          {rule.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => (editingRuleId === rule.id ? setEditingRuleId(null) : startEditingRule(rule))}
+                            disabled={ruleBusyId === rule.id}
+                            className="text-gray-400 hover:text-white disabled:opacity-50 transition-colors"
+                            title="Edit value/threshold/reason"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => toggleRuleEnabled(rule)}
+                            disabled={ruleBusyId === rule.id}
+                            className="text-gray-400 hover:text-white disabled:opacity-50 transition-colors"
+                            title={rule.enabled ? 'Disable' : 'Enable'}
+                          >
+                            {rule.enabled ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
+                          </button>
+                          <button
+                            onClick={() => deleteRule(rule)}
+                            disabled={ruleBusyId === rule.id}
+                            className="text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
+                            title="Delete permanently"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {editingRuleId === rule.id && (
+                      <tr className="border-b border-white/5 bg-black/20">
+                        <td colSpan={6} className="px-6 py-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                            {rule.rule_type === 'amount_cap' ? (
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Threshold ($)</label>
+                                <input
+                                  type="number" step="0.01" min="0.01" required
+                                  value={editRuleForm.threshold}
+                                  onChange={e => setEditRuleForm(f => ({ ...f, threshold: e.target.value }))}
+                                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                                />
+                              </div>
+                            ) : (
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Value</label>
+                                <input
+                                  type="text" required maxLength={255}
+                                  value={editRuleForm.value}
+                                  onChange={e => setEditRuleForm(f => ({ ...f, value: e.target.value }))}
+                                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <label className="block text-xs text-gray-400 mb-1">Reason</label>
+                              <input
+                                type="text" maxLength={500}
+                                value={editRuleForm.reason}
+                                onChange={e => setEditRuleForm(f => ({ ...f, reason: e.target.value }))}
+                                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                              />
+                            </div>
+                          </div>
+                          {editRuleError && <p className="text-red-400 text-xs mb-3">{editRuleError}</p>}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => submitEditRule(rule)}
+                              disabled={editRuleBusy}
+                              className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                            >
+                              {editRuleBusy ? 'Saving...' : 'Save Changes'}
+                            </button>
+                            <button onClick={() => setEditingRuleId(null)} className="text-gray-400 hover:text-white text-sm px-3 py-2">
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

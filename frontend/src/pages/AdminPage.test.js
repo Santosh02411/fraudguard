@@ -134,6 +134,46 @@ describe('AdminPage — Fraud Rules tab', () => {
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/admin/fraud-rules/1'));
     await waitFor(() => expect(screen.queryByText('Shady Imports LLC')).not.toBeInTheDocument());
   });
+
+  test('can edit a rule\'s value and reason in place', async () => {
+    const rule = makeRule();
+    mockGet.mockImplementation(baseGetImpl({ rules: [rule] }));
+    mockPatch.mockResolvedValue({
+      data: { rule: { ...rule, value: 'New Shady Imports LLC', reason: 'Escalated after a second chargeback' } },
+    });
+
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    await screen.findByText('Shady Imports LLC');
+
+    fireEvent.click(screen.getByTitle('Edit value/threshold/reason'));
+    const valueInput = screen.getByDisplayValue('Shady Imports LLC');
+    fireEvent.change(valueInput, { target: { value: 'New Shady Imports LLC' } });
+    const reasonInput = screen.getByDisplayValue('Repeated chargebacks');
+    fireEvent.change(reasonInput, { target: { value: 'Escalated after a second chargeback' } });
+    fireEvent.click(screen.getByText('Save Changes'));
+
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/admin/fraud-rules/1', {
+      reason: 'Escalated after a second chargeback',
+      value: 'New Shady Imports LLC',
+    }));
+    expect(await screen.findByText('New Shady Imports LLC')).toBeInTheDocument();
+    expect(screen.getByText('Escalated after a second chargeback')).toBeInTheDocument();
+  });
+
+  test('editing an amount_cap rule shows a threshold field instead of a value field', async () => {
+    const rule = makeRule({ id: 2, rule_type: 'amount_cap', value: null, threshold: 10000 });
+    mockGet.mockImplementation(baseGetImpl({ rules: [rule] }));
+
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    await screen.findByText('$10,000');
+
+    fireEvent.click(screen.getByTitle('Edit value/threshold/reason'));
+    expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
+  });
 });
 
 describe('AdminPage — Fraud Rings tab', () => {
