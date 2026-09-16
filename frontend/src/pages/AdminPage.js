@@ -368,12 +368,16 @@ export default function AdminPage() {
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
+<<<<<<< HEAD
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
           <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
             <Users size={18} className="text-cyan-400" />
           </span>
           Admin Panel
         </h1>
+=======
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Admin Panel</h1>
+>>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
         <p className="text-gray-400 mt-1">System administration and monitoring</p>
       </div>
 

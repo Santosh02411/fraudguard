@@ -744,7 +744,11 @@ export default function SettingsPage() {
           <UserCog size={22} className="text-purple-400" />
         </div>
         <div>
+<<<<<<< HEAD
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Account Settings</h1>
+=======
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Account Settings</h1>
+>>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
           <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your password, email, two-factor authentication, API keys, and webhooks.</p>
         </div>
       </div>

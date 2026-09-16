@@ -220,12 +220,16 @@ export default function NewTransactionPage() {
           <FlaskConical size={22} className="text-purple-400" />
         </div>
         <div>
+<<<<<<< HEAD
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
               <FlaskConical size={18} className="text-cyan-400" />
             </span>
             Transaction Simulator
           </h1>
+=======
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Transaction Simulator</h1>
+>>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
           <p className="text-gray-400 mt-1 text-sm sm:text-base">
             Run a scenario — or a fully custom transaction — through the live fraud engine and inspect exactly how it was scored.
           </p>
