@@ -10832,6 +10832,50 @@
           "response": []
         },
         {
+          "id": "f8a033f1-f6f2-427c-9b2d-df53f99da0dd",
+          "name": "Preview a fraud rule's impact (dry-run, creates nothing)",
+          "request": {
+            "name": "Preview a fraud rule's impact (dry-run, creates nothing)",
+            "description": {
+              "content": "Same body shape as create. Counts/samples transactions already on file that would match, without creating the rule.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "admin",
+                "fraud-rules",
+                "preview"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rule_type\": \"blacklist_merchant\",\n  \"value\": \"Shady Imports LLC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": null
+          },
+          "response": []
+        },
+        {
           "id": "d5c180e5-df2e-4522-8814-5286df4e2c61",
           "name": "Update a fraud rule",
           "request": {

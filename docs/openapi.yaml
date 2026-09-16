@@ -1770,6 +1770,61 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /admin/fraud-rules/preview:
+    post:
+      tags: [Admin]
+      summary: Dry-run a candidate rule against transactions on file
+      description: |
+        Feature: rule impact preview. Same body shape as `POST
+        /admin/fraud-rules` above (rule_type plus value or threshold),
+        but nothing is created — this only counts and samples the
+        transactions already on file that the rule *would* match, so
+        an admin can catch an overly broad blacklist entry or amount
+        cap before it starts generating alerts. See
+        `models/fraudRuleRepository.js`'s `previewImpact`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFraudRuleRequest"
+            example:
+              rule_type: blacklist_merchant
+              value: Shady Imports LLC
+      responses:
+        "200":
+          description: Impact preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matched_count: { type: integer, description: "Total transactions on file this rule would match" }
+                  sample:
+                    type: array
+                    maxItems: 5
+                    description: The 5 most recent matches
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        merchant: { type: string }
+                        amount: { type: number, format: float }
+                        location: { type: string }
+                        card_type: { type: string }
+                        risk_level: { type: string, enum: [low, medium, high] }
+                        created_at: { type: string, format: date-time }
+        "400":
+          description: value provided for amount_cap, threshold provided for a blacklist type, or neither provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /admin/fraud-rules/{id}:
     patch:
       tags: [Admin]

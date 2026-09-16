@@ -606,7 +606,7 @@ coverage report as a workflow artifact.
 | **In-App Notifications** | A notification bell in the navbar shows recent alerts with a live-updating unseen badge, fed by the same WebSocket stream the Alerts page uses — click to view, "seen" state is per-account |
 | **Disputes (Case Management)** | Open a chargeback/dispute directly or from a transaction's detail page; admins track it through `opened → evidence_submitted → won/lost`, with a financial-summary rollup and CSV export |
 | **Step-Up Authentication** | A medium-risk transaction can be held pending an external OTP/3DS-style verification (opt in per webhook) instead of completing immediately — the Simulator can walk through the whole hold/resolve loop |
-| **Admin Rule Builder & Fraud Rings** | Admin-editable blacklists (merchant/location/device/IP) and an amount cap, evaluated ahead of the ML model; plus detection of account clusters sharing a device fingerprint or IP |
+| **Admin Rule Builder & Fraud Rings** | Admin-editable blacklists (merchant/location/device/IP) and an amount cap, evaluated ahead of the ML model, with a dry-run impact preview before you turn one on; plus detection of account clusters sharing a device fingerprint or IP |
 | **SAR-Style Compliance Reports** | Export a PDF or CSV bundling an alert's transaction, reasoning, network/dispute status, and audit trail — an internal review document, not a completed regulatory filing |
 | **ML Model Ops** | Admin view of the trained-model registry, feature/score drift monitoring against a live-traffic baseline, and shadow/canary deployment to compare a new model version on real traffic before promoting it |
 | **Analytics** | Bar charts and pie charts of transaction volume, risk distribution, and category breakdown |
@@ -1128,6 +1128,7 @@ reports the running `api_version`.
 | GET | `/api/admin/audit-logs/alert/:id` | Admin | Full view/resolve history for one alert |
 | GET | `/api/admin/fraud-rules` | Admin | List admin-editable blacklists (merchant/location/device/IP) and the amount cap |
 | POST | `/api/admin/fraud-rules` | Admin | Create a rule — takes effect on the next transaction scored (audit-logged) |
+| POST | `/api/admin/fraud-rules/preview` | Admin | Dry-run a candidate rule against transactions on file — count + sample of what it would have matched, creates nothing |
 | PATCH | `/api/admin/fraud-rules/:id` | Admin | Update value/threshold/reason, or enable/disable a rule (audit-logged) |
 | DELETE | `/api/admin/fraud-rules/:id` | Admin | Permanently delete a rule (audit-logged) |
 | GET | `/api/admin/fraud-rings` | Admin | Detect clusters of accounts sharing a device fingerprint or IP |
@@ -1236,6 +1237,13 @@ first, in `fraudEngine.js`'s `checkHardRules`, and can force
 A handful of defaults are seeded automatically once an admin account
 exists. Disabling a rule (`enabled: false`) is the usual way to turn
 it off without losing its configuration; deleting is permanent.
+Before turning one on, `POST /api/admin/fraud-rules/preview` (feature:
+rule impact preview) dry-runs the same rule_type/value/threshold
+against transactions already on file — creates nothing, just returns
+how many it would have matched and a sample — so an overly broad
+blacklist entry or too-low an amount cap gets caught before it starts
+generating alerts, not after. The Admin Panel's "Add Rule" form has a
+Preview Impact button for exactly this.
 
 **Fraud ring detection:** `/api/admin/fraud-rings` groups accounts
 that share a device fingerprint or IP address across *any* of their

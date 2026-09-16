@@ -3,7 +3,7 @@ import { api } from '../context/AuthContext';
 import { useAuth } from '../context/AuthContext';
 import {
   ScrollText, Download, Code2, Webhook, Trash2, ShieldOff, ShieldCheck,
-  ShieldAlert, Network, Cpu, Users, Plus, X, RefreshCw, Pencil,
+  ShieldAlert, Network, Cpu, Users, Plus, X, RefreshCw, Pencil, Eye,
 } from 'lucide-react';
 import { LoadingState, ErrorState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
@@ -70,6 +70,15 @@ export default function AdminPage() {
   const [ruleFormError, setRuleFormError] = useState('');
   const [ruleFormBusy, setRuleFormBusy] = useState(false);
   const [ruleBusyId, setRuleBusyId] = useState(null);
+
+  // Rule impact preview (feature: rule impact preview) — a dry-run
+  // against transactions already on file, shown before the rule
+  // actually exists. Cleared whenever the candidate rule's own fields
+  // change, since a stale preview from a different value/threshold
+  // would be actively misleading rather than just outdated.
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
 
   // In-place edit of an existing rule's value/threshold/reason
   // (rule_type itself is immutable — see adminSchemas.fraudRuleUpdateBody,
@@ -198,10 +207,37 @@ export default function AdminPage() {
       setFraudRules(prev => [...prev, data.rule]);
       setShowRuleForm(false);
       setRuleForm({ rule_type: 'blacklist_merchant', value: '', threshold: '', reason: '' });
+      setPreview(null);
     } catch (err) {
       setRuleFormError(err.response?.data?.error || 'Failed to create rule');
     } finally {
       setRuleFormBusy(false);
+    }
+  };
+
+  // A form-field change makes any prior preview stale — clear it so the
+  // admin never sees an impact number for a rule they've since edited.
+  const updateRuleForm = (changes) => {
+    setRuleForm(f => ({ ...f, ...changes }));
+    setPreview(null);
+    setPreviewError('');
+  };
+
+  const previewRuleImpact = async () => {
+    setPreviewLoading(true);
+    setPreviewError('');
+    setPreview(null);
+    try {
+      const body = { rule_type: ruleForm.rule_type };
+      if (ruleForm.rule_type === 'amount_cap') body.threshold = Number(ruleForm.threshold);
+      else body.value = ruleForm.value;
+
+      const { data } = await api.post('/admin/fraud-rules/preview', body);
+      setPreview(data);
+    } catch (err) {
+      setPreviewError(err.response?.data?.error || 'Failed to preview this rule');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -437,7 +473,7 @@ export default function AdminPage() {
             <h2 className="text-lg font-semibold text-white">Fraud Rules</h2>
             <span className="text-gray-500 text-sm">— admin-editable blacklists and amount cap, takes effect on the next transaction scored</span>
             <button
-              onClick={() => { setShowRuleForm(v => !v); setRuleFormError(''); }}
+              onClick={() => { setShowRuleForm(v => !v); setRuleFormError(''); setPreview(null); setPreviewError(''); }}
               className="ml-auto flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
             >
               {showRuleForm ? <X size={14} /> : <Plus size={14} />} {showRuleForm ? 'Cancel' : 'Add Rule'}
@@ -451,7 +487,7 @@ export default function AdminPage() {
                   <label className="block text-xs text-gray-400 mb-1">Rule Type</label>
                   <select
                     value={ruleForm.rule_type}
-                    onChange={e => setRuleForm(f => ({ ...f, rule_type: e.target.value }))}
+                    onChange={e => updateRuleForm({ rule_type: e.target.value })}
                     className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                   >
                     {RULE_TYPES.map(t => <option key={t} value={t}>{RULE_TYPE_LABEL[t]}</option>)}
@@ -463,7 +499,7 @@ export default function AdminPage() {
                     <input
                       type="number" step="0.01" min="0.01" required
                       value={ruleForm.threshold}
-                      onChange={e => setRuleForm(f => ({ ...f, threshold: e.target.value }))}
+                      onChange={e => updateRuleForm({ threshold: e.target.value })}
                       placeholder="10000"
                       className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                     />
@@ -474,7 +510,7 @@ export default function AdminPage() {
                     <input
                       type="text" required maxLength={255}
                       value={ruleForm.value}
-                      onChange={e => setRuleForm(f => ({ ...f, value: e.target.value }))}
+                      onChange={e => updateRuleForm({ value: e.target.value })}
                       placeholder={ruleForm.rule_type === 'blacklist_ip' ? '203.0.113.5' : ruleForm.rule_type === 'blacklist_device' ? 'device fingerprint hash' : 'exact match text'}
                       className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                     />
@@ -486,19 +522,53 @@ export default function AdminPage() {
                 <input
                   type="text" maxLength={500}
                   value={ruleForm.reason}
-                  onChange={e => setRuleForm(f => ({ ...f, reason: e.target.value }))}
+                  onChange={e => updateRuleForm({ reason: e.target.value })}
                   placeholder="Why this rule exists"
                   className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                 />
               </div>
+
+              {previewError && <p className="text-red-400 text-xs mb-3">{previewError}</p>}
+              {preview && (
+                <div className={`mb-4 rounded-lg p-3 border ${preview.matched_count > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
+                  <p className={`text-sm font-medium ${preview.matched_count > 0 ? 'text-yellow-300' : 'text-green-400'}`}>
+                    {preview.matched_count === 0
+                      ? 'This rule would not have matched any transaction on file.'
+                      : `This rule would have matched ${preview.matched_count} transaction${preview.matched_count === 1 ? '' : 's'} on file.`}
+                  </p>
+                  {preview.sample.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {preview.sample.map(t => (
+                        <li key={t.id} className="text-xs text-gray-400">
+                          #{t.id} — {t.merchant} — ${Number(t.amount).toFixed(2)} — {new Date(t.created_at).toLocaleDateString()}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {preview.matched_count > preview.sample.length && (
+                    <p className="text-xs text-gray-500 mt-1">Showing the {preview.sample.length} most recent matches.</p>
+                  )}
+                </div>
+              )}
+
               {ruleFormError && <p className="text-red-400 text-xs mb-3">{ruleFormError}</p>}
-              <button
-                type="submit"
-                disabled={ruleFormBusy}
-                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                {ruleFormBusy ? 'Creating...' : 'Create Rule'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={previewRuleImpact}
+                  disabled={previewLoading || (ruleForm.rule_type === 'amount_cap' ? !ruleForm.threshold : !ruleForm.value)}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 disabled:opacity-40 text-gray-200 px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  <Eye size={14} /> {previewLoading ? 'Checking...' : 'Preview Impact'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={ruleFormBusy}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  {ruleFormBusy ? 'Creating...' : 'Create Rule'}
+                </button>
+              </div>
             </form>
           )}
 
