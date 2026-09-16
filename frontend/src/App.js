@@ -21,7 +21,7 @@ import SettingsPage from './pages/SettingsPage';
 
 function PrivateRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-[#0d1117] flex items-center justify-center text-gray-400">Loading...</div>;
+  if (loading) return <div className="min-h-screen bg-[#0a0f14] flex items-center justify-center text-gray-400">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
@@ -30,7 +30,7 @@ function PrivateRoute({ children, adminOnly = false }) {
 function Layout({ children }) {
   const location = useLocation();
   return (
-    <div className="min-h-screen bg-[#0d1117]">
+    <div className="min-h-screen bg-[#0a0f14]">
       <Navbar />
       {/* resetKey: a crash on one page recovers automatically once the
           user navigates away, instead of staying broken for the session. */}

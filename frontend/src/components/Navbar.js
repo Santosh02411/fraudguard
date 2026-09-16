@@ -16,7 +16,7 @@ export default function Navbar() {
 
   const navClass = ({ isActive }) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-      isActive ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'
+      isActive ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
     }`;
 
   const links = (
@@ -54,12 +54,14 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-[#0d1117] border-b border-white/10 px-4 sm:px-6 py-3 sticky top-0 z-50">
+    <nav className="bg-[#0a0f14] border-b border-white/10 px-4 sm:px-6 py-3 sticky top-0 z-50">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <NavLink to="/dashboard" className="flex items-center gap-2 text-purple-400 font-bold text-xl">
-            <Shield size={24} />
-            FraudGuard
+          <NavLink to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+              <Shield size={16} className="text-cyan-400" />
+            </span>
+            <span className="text-white font-semibold text-[15px] tracking-tight">FraudGuard</span>
           </NavLink>
           <div className="hidden lg:flex items-center gap-1">
             {links}
@@ -72,7 +74,7 @@ export default function Navbar() {
             to="/settings"
             title="Account Settings"
             className={({ isActive }) => `hidden lg:flex items-center justify-center p-2 rounded-lg transition-colors ${
-              isActive ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-white/10'
+              isActive ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             <UserCog size={18} />

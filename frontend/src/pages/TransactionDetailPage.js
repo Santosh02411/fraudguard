@@ -169,7 +169,7 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-6 mt-4">
+      <div className="bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-6 mt-4">
         <div className="flex items-center gap-2 mb-1">
           <Scale size={18} className="text-purple-400" />
           <h2 className="text-white font-semibold">Dispute</h2>
@@ -200,7 +200,7 @@ export default function TransactionDetailPage() {
               maxLength={500}
               rows={2}
               placeholder="I don't recognize this charge / item never arrived / billed twice, etc."
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
             />
             <label className="block text-xs text-gray-400 mb-1">
               Amount to dispute <span className="text-gray-600">(optional — defaults to the full ${Number(txn.amount).toFixed(2)})</span>
@@ -213,7 +213,7 @@ export default function TransactionDetailPage() {
               value={disputeAmount}
               onChange={e => setDisputeAmount(e.target.value)}
               placeholder={Number(txn.amount).toFixed(2)}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
             />
             {disputeError && <p className="text-red-400 text-xs mb-3">{disputeError}</p>}
             <div className="flex items-center gap-2">

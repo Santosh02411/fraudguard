@@ -7,12 +7,12 @@ import {
 } from 'lucide-react';
 import { downloadJson } from '../utils/download';
 
-const inputClass = "w-full bg-[#0d1117] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
+const inputClass = "w-full bg-[#0a0f14] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
 const labelClass = "block text-sm text-gray-300 mb-1";
 
 function Card({ icon: Icon, title, description, children }) {
   return (
-    <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-6">
+    <div className="bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={18} className="text-purple-400" />
         <h2 className="text-lg font-semibold text-white">{title}</h2>

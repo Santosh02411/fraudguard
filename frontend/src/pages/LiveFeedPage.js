@@ -151,7 +151,7 @@ export default function LiveFeedPage() {
       </div>
 
       {isAdmin && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl p-6 mb-6">
+        <div className="bg-[#111820] border border-white/10 rounded-xl p-6 mb-6">
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Interval (ms)</label>
@@ -163,7 +163,7 @@ export default function LiveFeedPage() {
                 value={intervalMs}
                 disabled={running}
                 onChange={(e) => setIntervalMs(Number(e.target.value))}
-                className="bg-[#0d1117] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-32 disabled:opacity-50"
+                className="bg-[#0a0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-32 disabled:opacity-50"
               />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function LiveFeedPage() {
                 value={fraudRatio}
                 disabled={running}
                 onChange={(e) => setFraudRatio(Number(e.target.value))}
-                className="bg-[#0d1117] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-28 disabled:opacity-50"
+                className="bg-[#0a0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-28 disabled:opacity-50"
               />
             </div>
             {!running ? (
@@ -208,24 +208,24 @@ export default function LiveFeedPage() {
 
       {simStatus && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-[#161b22] border border-white/10 rounded-xl p-4">
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-xs mb-1">Status</p>
             <p className={`text-lg font-bold ${running ? 'text-green-400' : 'text-gray-500'}`}>
               {running ? 'Live' : 'Stopped'}
             </p>
           </div>
-          <div className="bg-[#161b22] border border-white/10 rounded-xl p-4">
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-xs mb-1">Transactions</p>
             <p className="text-lg font-bold text-white">{simStatus.transactionCount ?? 0}</p>
           </div>
-          <div className="bg-[#161b22] border border-white/10 rounded-xl p-4">
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-xs mb-1">Flagged as Fraud</p>
             <p className="text-lg font-bold text-red-400">{simStatus.fraudCount ?? 0}</p>
           </div>
         </div>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-[#111820] border border-white/10 rounded-xl overflow-hidden">
         <div className="p-6 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Feed</h2>
         </div>

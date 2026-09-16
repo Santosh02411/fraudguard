@@ -35,7 +35,7 @@ function StatusBadge({ status }) {
 
 function SummaryCard({ title, value, color }) {
   return (
-    <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+    <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
       <p className="text-gray-400 text-xs sm:text-sm mb-1">{title}</p>
       <p className={`text-xl sm:text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
     </div>
@@ -221,7 +221,7 @@ export default function DisputesPage() {
       </div>
 
       {showOpenForm && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
+        <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-white font-semibold text-sm">Open a Dispute</h2>
             <button onClick={() => setShowOpenForm(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
@@ -238,7 +238,7 @@ export default function DisputesPage() {
                   required
                   value={openForm.transaction_id}
                   onChange={e => setOpenForm(f => ({ ...f, transaction_id: e.target.value }))}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                 >
                   <option value="">Select a transaction…</option>
                   {(openTxnOptions || []).map(t => (
@@ -258,7 +258,7 @@ export default function DisputesPage() {
                   value={openForm.reason}
                   onChange={e => setOpenForm(f => ({ ...f, reason: e.target.value }))}
                   placeholder="I don't recognize this charge / item never arrived / billed twice, etc."
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
               <div className="mb-3">
@@ -270,7 +270,7 @@ export default function DisputesPage() {
                   value={openForm.amount_disputed}
                   onChange={e => setOpenForm(f => ({ ...f, amount_disputed: e.target.value }))}
                   placeholder={selectedTxn ? Number(selectedTxn.amount).toFixed(2) : undefined}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
               {openFormError && <p className="text-red-400 text-xs mb-3">{openFormError}</p>}
@@ -300,13 +300,13 @@ export default function DisputesPage() {
       )}
 
       {showFilters && (
-        <form onSubmit={applyFilter} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
+        <form onSubmit={applyFilter} className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Status</label>
             <select
               value={status}
               onChange={e => setStatus(e.target.value)}
-              className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="opened">Opened</option>
@@ -326,7 +326,7 @@ export default function DisputesPage() {
         </form>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         <div className="p-6 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">
             Cases
@@ -399,7 +399,7 @@ export default function DisputesPage() {
                         rows={2}
                         maxLength={2000}
                         placeholder="Evidence submitted, outcome details, etc."
-                        className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+                        className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
                       />
                       {transitionError && <p className="text-red-400 text-xs mb-3">{transitionError}</p>}
                       <div className="flex flex-wrap items-center gap-2">

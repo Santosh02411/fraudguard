@@ -41,7 +41,7 @@ const DRIFT_STATUS_STYLE = {
 
 function StatCard({ title, value, color }) {
   return (
-    <div className="bg-[#161b22] border border-white/10 rounded-xl p-6">
+    <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
       <p className="text-gray-400 text-sm mb-1">{title}</p>
       <p className={`text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
     </div>
@@ -404,7 +404,7 @@ export default function AdminPage() {
             <StatCard title="System Fraud Rate" value={`${stats?.system_fraud_rate ?? 0}%`} color={stats?.system_fraud_rate > 15 ? 'text-red-400' : 'text-orange-400'} />
           </div>
 
-          <div className="bg-[#161b22] border border-white/10 rounded-xl">
+          <div className="bg-[#111820] border border-white/10 rounded-xl">
             <div className="p-6 border-b border-white/10">
               <h2 className="text-lg font-semibold text-white">User Management</h2>
             </div>
@@ -467,7 +467,7 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'rules' && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl">
+        <div className="bg-[#111820] border border-white/10 rounded-xl">
           <div className="p-6 border-b border-white/10 flex items-center gap-2 flex-wrap">
             <ShieldAlert size={18} className="text-purple-400" />
             <h2 className="text-lg font-semibold text-white">Fraud Rules</h2>
@@ -488,7 +488,7 @@ export default function AdminPage() {
                   <select
                     value={ruleForm.rule_type}
                     onChange={e => updateRuleForm({ rule_type: e.target.value })}
-                    className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                    className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                   >
                     {RULE_TYPES.map(t => <option key={t} value={t}>{RULE_TYPE_LABEL[t]}</option>)}
                   </select>
@@ -501,7 +501,7 @@ export default function AdminPage() {
                       value={ruleForm.threshold}
                       onChange={e => updateRuleForm({ threshold: e.target.value })}
                       placeholder="10000"
-                      className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                      className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                     />
                   </div>
                 ) : (
@@ -512,7 +512,7 @@ export default function AdminPage() {
                       value={ruleForm.value}
                       onChange={e => updateRuleForm({ value: e.target.value })}
                       placeholder={ruleForm.rule_type === 'blacklist_ip' ? '203.0.113.5' : ruleForm.rule_type === 'blacklist_device' ? 'device fingerprint hash' : 'exact match text'}
-                      className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                      className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                     />
                   </div>
                 )}
@@ -524,7 +524,7 @@ export default function AdminPage() {
                   value={ruleForm.reason}
                   onChange={e => updateRuleForm({ reason: e.target.value })}
                   placeholder="Why this rule exists"
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                 />
               </div>
 
@@ -641,7 +641,7 @@ export default function AdminPage() {
                                   type="number" step="0.01" min="0.01" required
                                   value={editRuleForm.threshold}
                                   onChange={e => setEditRuleForm(f => ({ ...f, threshold: e.target.value }))}
-                                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                                 />
                               </div>
                             ) : (
@@ -651,7 +651,7 @@ export default function AdminPage() {
                                   type="text" required maxLength={255}
                                   value={editRuleForm.value}
                                   onChange={e => setEditRuleForm(f => ({ ...f, value: e.target.value }))}
-                                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                                 />
                               </div>
                             )}
@@ -661,7 +661,7 @@ export default function AdminPage() {
                                 type="text" maxLength={500}
                                 value={editRuleForm.reason}
                                 onChange={e => setEditRuleForm(f => ({ ...f, reason: e.target.value }))}
-                                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                               />
                             </div>
                           </div>
@@ -690,7 +690,7 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'rings' && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl">
+        <div className="bg-[#111820] border border-white/10 rounded-xl">
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-2">
               <Network size={18} className="text-purple-400" />
@@ -743,12 +743,12 @@ export default function AdminPage() {
       {activeTab === 'mlops' && (
         <div className="space-y-6">
           {mlLoading ? (
-            <div className="bg-[#161b22] border border-white/10 rounded-xl"><LoadingState label="Loading model ops..." /></div>
+            <div className="bg-[#111820] border border-white/10 rounded-xl"><LoadingState label="Loading model ops..." /></div>
           ) : mlError ? (
-            <div className="bg-[#161b22] border border-white/10 rounded-xl"><ErrorState message={mlError} onRetry={loadMlOps} /></div>
+            <div className="bg-[#111820] border border-white/10 rounded-xl"><ErrorState message={mlError} onRetry={loadMlOps} /></div>
           ) : (
             <>
-              <div className="bg-[#161b22] border border-white/10 rounded-xl">
+              <div className="bg-[#111820] border border-white/10 rounded-xl">
                 <div className="p-6 border-b border-white/10 flex items-center gap-2 flex-wrap">
                   <Cpu size={18} className="text-purple-400" />
                   <h2 className="text-lg font-semibold text-white">Model Registry</h2>
@@ -787,7 +787,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="bg-[#161b22] border border-white/10 rounded-xl p-6">
+              <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
                   <h2 className="text-lg font-semibold text-white">Drift Monitoring</h2>
                   {mlDrift?.status && (
@@ -843,7 +843,7 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="bg-[#161b22] border border-white/10 rounded-xl p-6">
+              <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-4">Shadow / Canary Deployment</h2>
                 {mlShadow?.active ? (
                   <div>
@@ -894,7 +894,7 @@ export default function AdminPage() {
                         value={shadowVersionInput}
                         onChange={e => setShadowVersionInput(e.target.value)}
                         placeholder="v2"
-                        className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono w-32"
+                        className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono w-32"
                       />
                     </div>
                     <button
@@ -913,7 +913,7 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'integrations' && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl">
+        <div className="bg-[#111820] border border-white/10 rounded-xl">
           <div className="p-6 border-b border-white/10">
             <h2 className="text-lg font-semibold text-white">Integrations</h2>
             <p className="text-gray-500 text-sm mt-0.5">Every user's API keys and webhooks — self-service on their own Settings page, visible here for oversight.</p>
@@ -982,7 +982,7 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'audit' && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl">
+        <div className="bg-[#111820] border border-white/10 rounded-xl">
           <div className="p-6 border-b border-white/10 flex items-center gap-2 flex-wrap">
             <ScrollText size={18} className="text-purple-400" />
             <h2 className="text-lg font-semibold text-white">Audit Trail</h2>

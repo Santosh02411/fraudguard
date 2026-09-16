@@ -110,7 +110,7 @@ export default function TransactionsPage() {
       {exportError && <p className="text-red-400 text-sm mb-4">{exportError}</p>}
 
       {showFilters && (
-        <form onSubmit={applyFilters} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <form onSubmit={applyFilters} className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Merchant</label>
             <input
@@ -118,7 +118,7 @@ export default function TransactionsPage() {
               value={filters.merchant}
               onChange={e => setFilters(f => ({ ...f, merchant: e.target.value }))}
               placeholder="e.g. Amazon"
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div>
@@ -126,7 +126,7 @@ export default function TransactionsPage() {
             <select
               value={filters.category}
               onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="capitalize">{c}</option>)}
@@ -137,7 +137,7 @@ export default function TransactionsPage() {
             <select
               value={filters.riskLevel}
               onChange={e => setFilters(f => ({ ...f, riskLevel: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="low">Low</option>
@@ -152,7 +152,7 @@ export default function TransactionsPage() {
                 type="number" min="0" step="0.01"
                 value={filters.amountMin}
                 onChange={e => setFilters(f => ({ ...f, amountMin: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
               />
             </div>
             <div>
@@ -161,7 +161,7 @@ export default function TransactionsPage() {
                 type="number" min="0" step="0.01"
                 value={filters.amountMax}
                 onChange={e => setFilters(f => ({ ...f, amountMax: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function TransactionsPage() {
               type="date"
               value={filters.dateFrom}
               onChange={e => setFilters(f => ({ ...f, dateFrom: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div>
@@ -180,7 +180,7 @@ export default function TransactionsPage() {
               type="date"
               value={filters.dateTo}
               onChange={e => setFilters(f => ({ ...f, dateTo: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
@@ -196,7 +196,7 @@ export default function TransactionsPage() {
         </form>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         {loading ? (
           <LoadingState label="Loading transactions..." />
         ) : error ? (

@@ -123,7 +123,7 @@ export default function BulkImportPage() {
       </div>
 
       {!result && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-6 mb-6">
+        <div className="bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-6 mb-6">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors">
               <Upload size={16} /> Upload CSV
@@ -142,7 +142,7 @@ export default function BulkImportPage() {
             onChange={e => setCsvText(e.target.value)}
             rows={6}
             placeholder={'amount,merchant,category,location,card_type\n42.50,Whole Foods,grocery,"New York, US",debit'}
-            className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500 mb-2"
+            className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500 mb-2"
           />
           <p className="text-gray-500 text-xs mb-4">
             Required columns: <code>{REQUIRED_COLUMNS.join(', ')}</code>. Valid <code>category</code> values:{' '}
@@ -165,7 +165,7 @@ export default function BulkImportPage() {
               )}
               <div className="overflow-x-auto border border-white/10 rounded-lg max-h-64 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[#0d1117]">
+                  <thead className="sticky top-0 bg-[#0a0f14]">
                     <tr className="border-b border-white/10 text-gray-400">
                       <th className="text-left px-3 py-2">#</th>
                       <th className="text-left px-3 py-2">Amount</th>
@@ -224,25 +224,25 @@ export default function BulkImportPage() {
       {result && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
               <p className="text-gray-400 text-xs sm:text-sm mb-1">Completed</p>
               <p className="text-xl sm:text-2xl font-bold text-white">{result.summary.completed}</p>
             </div>
-            <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
               <p className="text-gray-400 text-xs sm:text-sm mb-1">Flagged</p>
               <p className="text-xl sm:text-2xl font-bold text-yellow-400">{result.summary.flagged}</p>
             </div>
-            <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
               <p className="text-gray-400 text-xs sm:text-sm mb-1">Held for Step-Up</p>
               <p className="text-xl sm:text-2xl font-bold text-blue-400">{result.summary.held_for_step_up}</p>
             </div>
-            <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
               <p className="text-gray-400 text-xs sm:text-sm mb-1">Failed</p>
               <p className="text-xl sm:text-2xl font-bold text-red-400">{result.summary.failed}</p>
             </div>
           </div>
 
-          <div className="bg-[#161b22] border border-white/10 rounded-xl">
+          <div className="bg-[#111820] border border-white/10 rounded-xl">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Results</h2>
               <button onClick={reset} className="text-purple-400 hover:text-purple-300 text-sm">Import Another Batch</button>
