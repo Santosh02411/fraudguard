@@ -14,14 +14,11 @@ const RISK_STYLE = {
   medium: 'bg-yellow-500/15 text-yellow-400',
   high: 'bg-red-500/15 text-red-400',
 };
-<<<<<<< HEAD
 const RISK_DOT = {
   low: 'bg-green-400',
   medium: 'bg-yellow-400',
   high: 'bg-red-400',
 };
-=======
->>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
 
 /**
  * Full transaction history — the search/filter "ops tool" view that the
@@ -92,16 +89,11 @@ export default function TransactionsPage() {
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-<<<<<<< HEAD
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
               <List size={18} className="text-cyan-400" />
             </span>
             Transactions
-=======
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-            <List size={26} className="text-purple-400 shrink-0" /> Transactions
->>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
           </h1>
           <p className="text-gray-400 mt-1 text-sm sm:text-base">Search and filter the full transaction history.</p>
         </div>
@@ -239,18 +231,12 @@ export default function TransactionsPage() {
                         <Link to={`/transactions/${t.id}`} className="text-white hover:text-purple-400 transition-colors">{t.merchant}</Link>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-gray-400 capitalize">{t.category}</td>
-<<<<<<< HEAD
                       <td className="px-4 sm:px-6 py-3 text-white tabular-nums">${Number(t.amount).toFixed(2)}</td>
                       <td className="px-4 sm:px-6 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${RISK_STYLE[t.risk_level]}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${RISK_DOT[t.risk_level]}`} />
                           {t.risk_level}
                         </span>
-=======
-                      <td className="px-4 sm:px-6 py-3 text-white">${Number(t.amount).toFixed(2)}</td>
-                      <td className="px-4 sm:px-6 py-3">
-                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${RISK_STYLE[t.risk_level]}`}>{t.risk_level}</span>
->>>>>>> bf357d9570db0fedd6fc7234bb444c1137e88e32
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-gray-500">{new Date(t.created_at).toLocaleDateString()}</td>
                     </tr>
