@@ -19,7 +19,6 @@ const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const { validate } = require('../middleware/validate');
 const disputeSchemas = require('../schemas/disputeSchemas');
 const { audit } = require('../middleware/auditLog');
-const csvService = require('../services/csvService');
 
 // POST /api/disputes - open a new dispute on a transaction.
 router.post('/', authMiddleware, validate({ body: disputeSchemas.openBody }), asyncHandler(async (req, res) => {
@@ -64,43 +63,6 @@ router.get('/', authMiddleware, validate({ query: disputeSchemas.listQuery }), a
     if (txn && txn.user_id === req.user.id) own.push(d);
   }
   res.json({ disputes: own });
-}));
-
-// GET /api/disputes/export - CSV export (feature: CSV export), same
-// ?status= filter and ownership scoping as the list endpoint above.
-// Registered before /:id so "export" isn't swallowed as an id.
-router.get('/export', authMiddleware, validate({ query: disputeSchemas.listQuery }), asyncHandler(async (req, res) => {
-  const all = await disputeRepository.list({ status: req.query.status });
-
-  let disputes = all;
-  if (req.user.role !== 'admin') {
-    disputes = [];
-    for (const d of all) {
-      const txn = await transactionRepository.findById(d.transaction_id);
-      if (txn && txn.user_id === req.user.id) disputes.push(d);
-    }
-  }
-
-  const csv = csvService.toCsv(disputes, [
-    { key: 'id', header: 'ID' },
-    { key: 'opened_at', header: 'Opened' },
-    { key: 'account_username', header: 'Account' }, // only meaningful for admin exports
-    { key: 'merchant', header: 'Merchant' },
-    { key: 'amount_disputed', header: 'Amount Disputed' },
-    { key: 'transaction_amount', header: 'Transaction Amount' },
-    { key: 'status', header: 'Status' },
-    { key: 'reason', header: 'Reason' },
-    { key: 'evidence_note', header: 'Evidence Note' },
-    { key: 'resolution_note', header: 'Resolution Note' },
-    { key: 'opened_by_username', header: 'Opened By' },
-    { key: 'resolved_at', header: 'Resolved' },
-  ]);
-
-  audit({ req, userId: req.user.id, username: req.user.username, action: 'disputes.export', outcome: 'success', details: { rowCount: disputes.length, status: req.query.status } });
-
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="disputes-${new Date().toISOString().slice(0, 10)}.csv"`);
-  res.send(csv);
 }));
 
 // GET /api/disputes/financial-summary - admin rollup: total exposure,

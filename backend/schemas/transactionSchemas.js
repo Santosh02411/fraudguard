@@ -22,16 +22,6 @@ const idParam = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-// POST /api/transactions/bulk body (feature: bulk transaction
-// import/batch scoring). Each row is the exact same shape as a single
-// POST /api/transactions — capped at 50 rows per request so one call
-// can't be used to hammer the fraud-scoring pipeline (each row still
-// costs a real ML/rule-engine call; see routes/transactions.js's
-// scoreAndCreateTransaction).
-const bulkCreate = z.object({
-  transactions: z.array(create).min(1, 'At least one transaction is required').max(50, 'A single bulk request is capped at 50 transactions'),
-});
-
 // POST /api/transactions/:id/step-up/verify body (feature: step-up
 // auth hook). The calling merchant's own OTP/3DS provider decided
 // success/failure out-of-band; this call reports that outcome back.
@@ -58,4 +48,4 @@ const listQuery = z.object({
   amountMax: z.coerce.number().nonnegative().optional(),
 });
 
-module.exports = { create, bulkCreate, idParam, listQuery, stepUpVerifyBody, CATEGORIES, LOCATIONS, CARD_TYPES, RISK_LEVELS };
+module.exports = { create, idParam, listQuery, stepUpVerifyBody, CATEGORIES, LOCATIONS, CARD_TYPES, RISK_LEVELS };

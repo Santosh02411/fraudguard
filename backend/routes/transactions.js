@@ -49,13 +49,14 @@ router.get('/', flexibleAuth, requireScope('transactions:read'), validate({ quer
   res.json({ transactions, pagination: paginationMeta({ page, limit, total }) });
 }));
 
-// Core "score, persist, alert, notify" pipeline shared by a single
-// POST /api/transactions and the bulk import endpoint below — every
-// side effect (alert creation, live feed, webhook dispatch, step-up
-// eligibility) is identical either way; only the HTTP-level concerns
-// (idempotency, per-row error isolation, response shape) differ
-// between the two call sites.
-async function scoreAndCreateTransaction(req, txnData) {
+// POST /api/transactions - create new transaction
+// idempotency: an optional `Idempotency-Key` header makes a retried
+// POST safe — see middleware/idempotency.js. Placed after validate()
+// so it hashes the coerced/normalized body, and after flexibleAuth so
+// it has req.user to scope the key by.
+router.post('/', flexibleAuth, requireScope('transactions:write'), transactionLimiter, validate({ body: transactionSchemas.create }), idempotency, asyncHandler(async (req, res) => {
+  const { amount, merchant, category, location, card_type } = req.body;
+
   // Recent history + dynamic blacklist so the fraud engine can derive
   // velocity, spending deviation, geo-distance, repeat-retailer, and
   // device/IP novelty features (see ml_service/README.md).
@@ -65,8 +66,12 @@ async function scoreAndCreateTransaction(req, txnData) {
     fraudRuleRepository.getActiveRuleConfig(),
   ]);
 
-  const enrichedTxnData = {
-    ...txnData,
+  const txnData = {
+    amount,
+    merchant,
+    category,
+    location,
+    card_type,
     device_fingerprint: fingerprintDevice(req),
     ip_address: clientIp(req),
   };
@@ -76,9 +81,9 @@ async function scoreAndCreateTransaction(req, txnData) {
   // and does that cluster reach a confirmed-fraud account (even through
   // an intermediary)? See fraudEngine.js's checkNetworkRisk for how this
   // is combined with the hard-rule/ML/rule-engine layers.
-  const networkRisk = await networkRiskForTransaction(enrichedTxnData, req.user.id);
+  const networkRisk = await networkRiskForTransaction(txnData, req.user.id);
 
-  const analysis = await analyzeTransactionHybrid(enrichedTxnData, recentTxns, blacklist, undefined, networkRisk, ruleConfig);
+  const analysis = await analyzeTransactionHybrid(txnData, recentTxns, blacklist, undefined, networkRisk, ruleConfig);
 
   // Step-up auth hook (feature: step-up authentication): a medium-risk
   // transaction gets HELD for an extra verification step instead of
@@ -97,7 +102,7 @@ async function scoreAndCreateTransaction(req, txnData) {
 
   const { lastInsertRowid: txnId } = await transactionRepository.insert({
     user_id: req.user.id,
-    ...enrichedTxnData,
+    ...txnData,
     is_fraud: analysis.is_fraud,
     fraud_score: analysis.fraud_score,
     risk_level: analysis.risk_level,
@@ -112,7 +117,7 @@ async function scoreAndCreateTransaction(req, txnData) {
   let newAlert = null;
   if (analysis.risk_level === 'high' || analysis.risk_level === 'medium') {
     const riskLabel = analysis.risk_level === 'high' ? 'High risk' : 'Medium risk';
-    const message = `${riskLabel} transaction detected at ${enrichedTxnData.merchant}. Amount: $${enrichedTxnData.amount.toFixed(2)}`;
+    const message = `${riskLabel} transaction detected at ${merchant}. Amount: $${amount.toFixed(2)}`;
     const { lastInsertRowid: alertId } = await alertRepository.insert({
       transaction_id: txnId,
       user_id: req.user.id,
@@ -129,8 +134,8 @@ async function scoreAndCreateTransaction(req, txnData) {
       risk_level: analysis.risk_level,
       resolved: 0,
       created_at: new Date().toISOString(),
-      merchant: enrichedTxnData.merchant,
-      amount: enrichedTxnData.amount,
+      merchant,
+      amount,
       username: req.user.username,
     };
   }
@@ -163,7 +168,21 @@ async function scoreAndCreateTransaction(req, txnData) {
     webhookService.dispatch(req.user.id, 'transaction.flagged', { transaction: newTxn, analysis });
   }
 
-  return {
+  // Traceability for the API-key integration surface specifically —
+  // human/browser-session transaction creation isn't audited (it'd just
+  // duplicate middleware/requestLogger.js's access log at high volume
+  // for no extra signal), but a service credential creating a
+  // transaction on an account's behalf is exactly the kind of "who/what
+  // did this" question worth being able to answer later.
+  if (req.authMethod === 'api_key') {
+    audit({
+      req, userId: req.user.id, username: req.user.username,
+      action: 'transactions.create_via_api_key', targetType: 'transaction', targetId: txnId, outcome: 'success',
+      details: { apiKeyId: req.apiKey.id, apiKeyName: req.apiKey.name },
+    });
+  }
+
+  res.status(201).json({
     transaction: newTxn,
     // Step-up contract (feature: step-up authentication): when present,
     // the calling merchant is expected to run their own OTP/3DS flow
@@ -197,87 +216,6 @@ async function scoreAndCreateTransaction(req, txnData) {
         ? '⚠️ Suspicious transaction. Please review carefully.'
         : '✅ Transaction looks safe.',
     },
-  };
-}
-
-// POST /api/transactions - create new transaction
-// idempotency: an optional `Idempotency-Key` header makes a retried
-// POST safe — see middleware/idempotency.js. Placed after validate()
-// so it hashes the coerced/normalized body, and after flexibleAuth so
-// it has req.user to scope the key by.
-router.post('/', flexibleAuth, requireScope('transactions:write'), transactionLimiter, validate({ body: transactionSchemas.create }), idempotency, asyncHandler(async (req, res) => {
-  const { amount, merchant, category, location, card_type } = req.body;
-  const result = await scoreAndCreateTransaction(req, { amount, merchant, category, location, card_type });
-
-  // Traceability for the API-key integration surface specifically —
-  // human/browser-session transaction creation isn't audited (it'd just
-  // duplicate middleware/requestLogger.js's access log at high volume
-  // for no extra signal), but a service credential creating a
-  // transaction on an account's behalf is exactly the kind of "who/what
-  // did this" question worth being able to answer later.
-  if (req.authMethod === 'api_key') {
-    audit({
-      req, userId: req.user.id, username: req.user.username,
-      action: 'transactions.create_via_api_key', targetType: 'transaction', targetId: result.transaction.id, outcome: 'success',
-      details: { apiKeyId: req.apiKey.id, apiKeyName: req.apiKey.name },
-    });
-  }
-
-  res.status(201).json(result);
-}));
-
-// POST /api/transactions/bulk - feature: bulk transaction import/batch
-// scoring. Scores every row through the exact same pipeline as a single
-// POST above — the same alerts, webhooks, live feed, and step-up
-// eligibility — so a batch-imported transaction is never a
-// second-class citizen next to one entered through the Simulator. A
-// malformed row fails validation for the whole request before anything
-// is created (see transactionSchemas.bulkCreate); a row that throws
-// DURING scoring (rare — e.g. a transient error) is reported per-row
-// instead of failing the rest of the batch. No idempotency support
-// here — the key scheme is built around a single transaction body, not
-// an array of them; retry a bulk request cautiously.
-//
-// Always audit-logged regardless of auth method (unlike the single-
-// transaction endpoint above) — creating many transactions in one call
-// is a more consequential action than one, worth a "who did this and
-// how many" record even for a human, logged-in session.
-router.post('/bulk', flexibleAuth, requireScope('transactions:write'), transactionLimiter, validate({ body: transactionSchemas.bulkCreate }), asyncHandler(async (req, res) => {
-  const results = [];
-  let completed = 0;
-  let flagged = 0;
-  let heldForStepUp = 0;
-  let failed = 0;
-
-  for (let i = 0; i < req.body.transactions.length; i += 1) {
-    const { amount, merchant, category, location, card_type } = req.body.transactions[i];
-    try {
-      // eslint-disable-next-line no-await-in-loop -- each row must see
-      // the effects (recent-history, blacklist) of the ones before it
-      // in the same batch, so this can't be parallelized with Promise.all.
-      const result = await scoreAndCreateTransaction(req, { amount, merchant, category, location, card_type });
-      results.push({ index: i, ...result });
-      completed += 1;
-      if (result.step_up) heldForStepUp += 1;
-      else if (result.analysis.risk_level !== 'low') flagged += 1;
-    } catch (err) {
-      results.push({ index: i, error: err.message || 'Failed to score this transaction' });
-      failed += 1;
-    }
-  }
-
-  audit({
-    req, userId: req.user.id, username: req.user.username,
-    action: 'transactions.bulk_create', outcome: failed === 0 ? 'success' : 'failure',
-    details: {
-      rowCount: req.body.transactions.length, completed, flagged, heldForStepUp, failed,
-      ...(req.authMethod === 'api_key' ? { apiKeyId: req.apiKey.id, apiKeyName: req.apiKey.name } : {}),
-    },
-  });
-
-  res.status(201).json({
-    summary: { total: req.body.transactions.length, completed, flagged, held_for_step_up: heldForStepUp, failed },
-    results,
   });
 }));
 
