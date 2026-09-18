@@ -210,7 +210,7 @@ export default function NewTransactionPage() {
     }
   };
 
-  const inputClass = "w-full bg-[#0a0f14] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
+  const inputClass = "w-full bg-[#0d1117] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
   const labelClass = "block text-sm text-gray-300 mb-1";
 
   return (
@@ -220,12 +220,7 @@ export default function NewTransactionPage() {
           <FlaskConical size={22} className="text-purple-400" />
         </div>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
-              <FlaskConical size={18} className="text-cyan-400" />
-            </span>
-            Transaction Simulator
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Transaction Simulator</h1>
           <p className="text-gray-400 mt-1 text-sm sm:text-base">
             Run a scenario — or a fully custom transaction — through the live fraud engine and inspect exactly how it was scored.
           </p>
@@ -234,7 +229,7 @@ export default function NewTransactionPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Scenario library */}
-        <div className="lg:col-span-2 bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-6 h-fit">
+        <div className="lg:col-span-2 bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-6 h-fit">
           <div className="flex items-center gap-2 mb-1 text-white font-semibold">
             <ListChecks size={16} className="text-purple-400" /> Scenario Library
           </div>
@@ -278,7 +273,7 @@ export default function NewTransactionPage() {
 
         {/* Form + result */}
         <div className="lg:col-span-3">
-          <div className="bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-8">
+          <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white">Transaction Details</h2>
               {activeScenario && (
@@ -325,7 +320,7 @@ export default function NewTransactionPage() {
                     className={inputClass}
                   >
                     {CATEGORIES.map(c => (
-                      <option key={c} value={c} className="bg-[#111820] capitalize">{c}</option>
+                      <option key={c} value={c} className="bg-[#161b22] capitalize">{c}</option>
                     ))}
                   </select>
                 </div>
@@ -337,7 +332,7 @@ export default function NewTransactionPage() {
                     className={inputClass}
                   >
                     {CARD_TYPES.map(c => (
-                      <option key={c} value={c} className="bg-[#111820] capitalize">{c}</option>
+                      <option key={c} value={c} className="bg-[#161b22] capitalize">{c}</option>
                     ))}
                   </select>
                 </div>
@@ -351,7 +346,7 @@ export default function NewTransactionPage() {
                   className={inputClass}
                 >
                   {LOCATIONS.map(l => (
-                    <option key={l} value={l} className="bg-[#111820]">{l}</option>
+                    <option key={l} value={l} className="bg-[#161b22]">{l}</option>
                   ))}
                 </select>
               </div>

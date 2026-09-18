@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const inputClass = "w-full bg-[#0a0f14] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
+  const inputClass = "w-full bg-[#0d1117] border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors";
   const labelClass = "block text-sm text-gray-300 mb-1";
 
   const handleSubmit = async (e) => {
@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f14] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 text-purple-400 mb-2">
@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
           <h1 className="text-3xl font-bold text-white">Reset Password</h1>
         </div>
 
-        <div className="bg-[#111820] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#161b22] border border-white/10 rounded-2xl p-8">
           {!token ? (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3 text-sm">
               This page requires a reset link — please use the link from your password reset email, or{' '}

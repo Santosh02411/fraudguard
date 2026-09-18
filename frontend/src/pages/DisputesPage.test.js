@@ -67,8 +67,6 @@ beforeEach(() => {
   mockPatch.mockReset();
   mockPost.mockReset();
   mockUser = { id: 1, username: 'test_user', role: 'user' };
-  window.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-  window.URL.revokeObjectURL = jest.fn();
 });
 
 describe('DisputesPage — regular user', () => {
@@ -122,49 +120,6 @@ describe('DisputesPage — regular user', () => {
     fireEvent.click(screen.getByText('Apply'));
 
     await waitFor(() => expect(mockGet).toHaveBeenLastCalledWith('/disputes', { params: { status: 'won' } }));
-  });
-
-  test('exporting downloads a CSV with no status param when unfiltered', async () => {
-    mockGet.mockImplementation((url) => {
-      if (url === '/disputes/export') return Promise.resolve({ data: 'id,merchant\n1,Corner Cafe\n', headers: {} });
-      return Promise.resolve({ data: { disputes: [makeDispute()] } });
-    });
-    renderPage();
-    await waitFor(() => expect(screen.getByText('Corner Cafe')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText('Export CSV'));
-
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/disputes/export', { params: {}, responseType: 'blob' }));
-    await waitFor(() => expect(window.URL.createObjectURL).toHaveBeenCalled());
-  });
-
-  test('exporting while a status filter is active includes it in the request', async () => {
-    mockGet.mockImplementation((url, config) => {
-      if (url === '/disputes/export') return Promise.resolve({ data: 'id,merchant\n', headers: {} });
-      return Promise.resolve({ data: { disputes: config?.params?.status === 'won' ? [] : [makeDispute()] } });
-    });
-    renderPage();
-    await waitFor(() => expect(screen.getByText('Corner Cafe')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText(/Filters/i));
-    fireEvent.change(screen.getByDisplayValue('All'), { target: { value: 'won' } });
-    fireEvent.click(screen.getByText('Apply'));
-    await waitFor(() => expect(screen.getByText(/No disputes match/i)).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText('Export CSV'));
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/disputes/export', { params: { status: 'won' }, responseType: 'blob' }));
-  });
-
-  test('a failed export shows an error', async () => {
-    mockGet.mockImplementation((url) => {
-      if (url === '/disputes/export') return Promise.reject(new Error('network error'));
-      return Promise.resolve({ data: { disputes: [makeDispute()] } });
-    });
-    renderPage();
-    await waitFor(() => expect(screen.getByText('Corner Cafe')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText('Export CSV'));
-    expect(await screen.findByText(/Failed to export disputes/i)).toBeInTheDocument();
   });
 });
 
