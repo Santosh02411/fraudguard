@@ -9,7 +9,7 @@ function ContributionTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-xs">
+    <div className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-xs">
       <p className="text-white font-medium mb-0.5">{d.feature}</p>
       <p className={d.shap_value > 0 ? 'text-red-400' : 'text-green-400'}>
         {d.shap_value > 0 ? 'Increased' : 'Decreased'} fraud score &middot; {d.shap_value > 0 ? '+' : ''}{d.shap_value.toFixed(3)}

@@ -34,7 +34,7 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
-          <div className="max-w-md w-full bg-[#111820] border border-red-500/30 rounded-xl p-8 text-center">
+          <div className="max-w-md w-full bg-[#161b22] border border-red-500/30 rounded-xl p-8 text-center">
             <div className="w-14 h-14 mx-auto rounded-full bg-red-500/10 flex items-center justify-center mb-4">
               <ShieldAlert size={26} className="text-red-400" />
             </div>
