@@ -120,4 +120,34 @@ async function getActiveRuleConfig() {
   return config;
 }
 
-module.exports = { RULE_TYPES, listRules, findById, createRule, updateRule, deleteRule, seedDefaultsIfEmpty, getActiveRuleConfig };
+/**
+ * Dry-run a candidate rule against the transactions already on file,
+ * without creating it — feature: rule impact preview. Lets an admin
+ * see "this would have matched N past transactions" before turning a
+ * new blacklist entry or a lower amount cap live, so a rule that's
+ * far too broad (e.g. a common location, or a cap that would have
+ * caught half of last month's legitimate traffic) gets caught before
+ * it starts generating alerts, not after.
+ */
+async function previewImpact({ rule_type, value, threshold }) {
+  let where;
+  let params;
+  switch (rule_type) {
+    case 'blacklist_merchant': where = 'merchant = ?'; params = [value]; break;
+    case 'blacklist_location': where = 'location = ?'; params = [value]; break;
+    case 'blacklist_device': where = 'device_fingerprint = ?'; params = [value]; break;
+    case 'blacklist_ip': where = 'ip_address = ?'; params = [value]; break;
+    case 'amount_cap': where = 'amount > ?'; params = [threshold]; break;
+    default: where = '0 = 1'; params = []; break;
+  }
+
+  const { count } = await db.get(`SELECT COUNT(*) as count FROM transactions WHERE ${where}`, params);
+  const sample = await db.all(
+    `SELECT id, merchant, amount, location, card_type, risk_level, created_at
+     FROM transactions WHERE ${where} ORDER BY created_at DESC LIMIT 5`,
+    params
+  );
+  return { matched_count: Number(count), sample };
+}
+
+module.exports = { RULE_TYPES, listRules, findById, createRule, updateRule, deleteRule, seedDefaultsIfEmpty, getActiveRuleConfig, previewImpact };
