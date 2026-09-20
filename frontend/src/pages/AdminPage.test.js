@@ -114,6 +114,82 @@ describe('AdminPage — Fraud Rules tab', () => {
     expect(screen.queryByPlaceholderText('203.0.113.5')).not.toBeInTheDocument();
   });
 
+  test('Preview Impact is disabled until the required field is filled in', async () => {
+    mockGet.mockImplementation(baseGetImpl());
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    fireEvent.click(await screen.findByText('Add Rule'));
+
+    expect(screen.getByText('Preview Impact').closest('button')).toBeDisabled();
+    fireEvent.change(screen.getByPlaceholderText('exact match text'), { target: { value: 'Shady Imports LLC' } });
+    expect(screen.getByText('Preview Impact').closest('button')).not.toBeDisabled();
+  });
+
+  test('previewing shows the matched count and sample without creating a rule', async () => {
+    mockGet.mockImplementation(baseGetImpl());
+    mockPost.mockImplementation((url) => {
+      if (url === '/admin/fraud-rules/preview') {
+        return Promise.resolve({
+          data: {
+            matched_count: 2,
+            sample: [{ id: 501, merchant: 'Shady Imports LLC', amount: 80, created_at: '2026-01-05T00:00:00Z' }],
+          },
+        });
+      }
+      return Promise.reject(new Error(`unmocked POST ${url}`));
+    });
+
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    fireEvent.click(await screen.findByText('Add Rule'));
+    fireEvent.change(screen.getByPlaceholderText('exact match text'), { target: { value: 'Shady Imports LLC' } });
+    fireEvent.click(screen.getByText('Preview Impact'));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/admin/fraud-rules/preview', { rule_type: 'blacklist_merchant', value: 'Shady Imports LLC' }));
+    expect(await screen.findByText(/would have matched 2 transactions/)).toBeInTheDocument();
+    expect(screen.getByText(/Shady Imports LLC — \$80\.00/)).toBeInTheDocument();
+    // create-rule endpoint was never called
+    expect(mockPost).not.toHaveBeenCalledWith('/admin/fraud-rules', expect.anything());
+  });
+
+  test('a zero-match preview is shown as reassuring rather than a warning', async () => {
+    mockGet.mockImplementation(baseGetImpl());
+    mockPost.mockImplementation((url) => {
+      if (url === '/admin/fraud-rules/preview') return Promise.resolve({ data: { matched_count: 0, sample: [] } });
+      return Promise.reject(new Error(`unmocked POST ${url}`));
+    });
+
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    fireEvent.click(await screen.findByText('Add Rule'));
+    fireEvent.change(screen.getByPlaceholderText('exact match text'), { target: { value: 'Brand New Merchant' } });
+    fireEvent.click(screen.getByText('Preview Impact'));
+
+    expect(await screen.findByText(/would not have matched any transaction/)).toBeInTheDocument();
+  });
+
+  test('editing the value after previewing clears the stale preview', async () => {
+    mockGet.mockImplementation(baseGetImpl());
+    mockPost.mockImplementation((url) => {
+      if (url === '/admin/fraud-rules/preview') return Promise.resolve({ data: { matched_count: 3, sample: [] } });
+      return Promise.reject(new Error(`unmocked POST ${url}`));
+    });
+
+    render(<AdminPage />);
+    await waitFor(() => expect(screen.getByText('User Management')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fraud Rules'));
+    fireEvent.click(await screen.findByText('Add Rule'));
+    fireEvent.change(screen.getByPlaceholderText('exact match text'), { target: { value: 'Shady Imports LLC' } });
+    fireEvent.click(screen.getByText('Preview Impact'));
+    await screen.findByText(/would have matched 3 transactions/);
+
+    fireEvent.change(screen.getByPlaceholderText('exact match text'), { target: { value: 'A Different Merchant' } });
+    expect(screen.queryByText(/would have matched 3 transactions/)).not.toBeInTheDocument();
+  });
+
   test('can toggle a rule off and delete it', async () => {
     const rule = makeRule();
     mockGet.mockImplementation(baseGetImpl({ rules: [rule] }));

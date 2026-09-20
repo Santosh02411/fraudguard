@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../context/AuthContext';
 import FraudScoreExplanation from '../components/FraudScoreExplanation';
-import { ArrowLeft, CheckCircle, AlertTriangle, XCircle, Scale } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, XCircle, Scale, ShieldQuestion } from 'lucide-react';
 import { LoadingState, ErrorState } from '../components/ui/States';
 
 const RISK_STYLE = {
@@ -46,6 +46,17 @@ export default function TransactionDetailPage() {
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeError, setDisputeError] = useState('');
 
+  // Step-up recovery (feature: step-up authentication) — a transaction
+  // left in pending_step_up (e.g. the Simulator tab was closed before
+  // it was resolved) is otherwise a dead end: the challenge_token was
+  // only ever shown once, at creation. Polling here recovers it (the
+  // poll endpoint returns it to the transaction's own owner/admin —
+  // see routes/transactions.js) so it can still be resolved from here.
+  const [stepUp, setStepUp] = useState(null);
+  const [stepUpLoading, setStepUpLoading] = useState(false);
+  const [stepUpBusy, setStepUpBusy] = useState(false);
+  const [stepUpError, setStepUpError] = useState('');
+
   const load = useCallback(() => {
     setLoading(true);
     setError('');
@@ -66,6 +77,33 @@ export default function TransactionDetailPage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadDispute(); }, [loadDispute]);
+
+  useEffect(() => {
+    if (txn?.status !== 'pending_step_up') return;
+    setStepUpLoading(true);
+    setStepUpError('');
+    api.get(`/transactions/${id}/step-up`)
+      .then(res => setStepUp(res.data))
+      .catch((err) => setStepUpError(err.response?.data?.error || 'Failed to load the step-up challenge'))
+      .finally(() => setStepUpLoading(false));
+  }, [id, txn?.status]);
+
+  const resolveStepUp = async (outcome) => {
+    setStepUpBusy(true);
+    setStepUpError('');
+    try {
+      const { data } = await api.post(`/transactions/${id}/step-up/verify`, {
+        challenge_token: stepUp.challenge.challenge_token,
+        outcome,
+      });
+      setTxn(data.transaction);
+      setStepUp(null);
+    } catch (err) {
+      setStepUpError(err.response?.data?.error || 'Failed to resolve the step-up challenge');
+    } finally {
+      setStepUpBusy(false);
+    }
+  };
 
   const submitDispute = async (e) => {
     e.preventDefault();
@@ -169,7 +207,51 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 sm:p-6 mt-4">
+      {txn.status === 'pending_step_up' && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 sm:p-6 mt-4">
+          <div className="flex items-start gap-3">
+            <ShieldQuestion size={20} className="text-blue-400 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="text-blue-300 font-medium text-sm">Step-Up Verification Required</p>
+              {stepUpLoading ? (
+                <p className="text-gray-400 text-xs mt-1">Loading the pending challenge...</p>
+              ) : stepUpError ? (
+                <p className="text-red-400 text-xs mt-1">{stepUpError}</p>
+              ) : stepUp ? (
+                <>
+                  <p className="text-gray-400 text-xs mt-1">
+                    This transaction is still held (status: <code>pending_step_up</code>) pending your own {stepUp.challenge.method.toUpperCase()} flow.
+                    In place of a real customer completing that flow, simulate the outcome below.
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => resolveStepUp('success')}
+                      disabled={stepUpBusy}
+                      className="flex items-center gap-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      <CheckCircle size={13} /> Simulate: Customer Verifies
+                    </button>
+                    <button
+                      onClick={() => resolveStepUp('failure')}
+                      disabled={stepUpBusy}
+                      className="flex items-center gap-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      <XCircle size={13} /> Simulate: Customer Fails
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+      {txn.status === 'blocked' && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-4 mt-4 text-sm text-red-300">
+          Blocked — the step-up verification failed, so this transaction was never completed.
+        </div>
+      )}
+
+      <div className="bg-[#111820] border border-white/10 rounded-xl p-5 sm:p-6 mt-4">
         <div className="flex items-center gap-2 mb-1">
           <Scale size={18} className="text-purple-400" />
           <h2 className="text-white font-semibold">Dispute</h2>
@@ -200,7 +282,7 @@ export default function TransactionDetailPage() {
               maxLength={500}
               rows={2}
               placeholder="I don't recognize this charge / item never arrived / billed twice, etc."
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
             />
             <label className="block text-xs text-gray-400 mb-1">
               Amount to dispute <span className="text-gray-600">(optional — defaults to the full ${Number(txn.amount).toFixed(2)})</span>
@@ -213,7 +295,7 @@ export default function TransactionDetailPage() {
               value={disputeAmount}
               onChange={e => setDisputeAmount(e.target.value)}
               placeholder={Number(txn.amount).toFixed(2)}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
             />
             {disputeError && <p className="text-red-400 text-xs mb-3">{disputeError}</p>}
             <div className="flex items-center gap-2">

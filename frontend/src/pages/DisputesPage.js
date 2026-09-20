@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api, useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
-  Scale, CheckCircle, XCircle, Clock, FileText, RefreshCw, Filter, X, Plus,
+  Scale, CheckCircle, XCircle, Clock, FileText, RefreshCw, Filter, X, Plus, Download,
 } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
+import { downloadBlobResponse } from '../utils/download';
 
 const STATUS_LABEL = {
   opened: 'Opened',
@@ -18,6 +19,12 @@ const STATUS_STYLE = {
   won: 'bg-green-500/15 text-green-400',
   lost: 'bg-red-500/15 text-red-400',
 };
+const STATUS_DOT = {
+  opened: 'bg-yellow-400',
+  evidence_submitted: 'bg-blue-400',
+  won: 'bg-green-400',
+  lost: 'bg-red-400',
+};
 // The next legal step(s) from a given status — mirrors
 // disputeRepository.js's TRANSITIONS so the UI never offers a button
 // the API would reject.
@@ -29,14 +36,19 @@ const NEXT_STEPS = {
 };
 
 function StatusBadge({ status }) {
-  return <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status]}`} />
+      {STATUS_LABEL[status]}
+    </span>
+  );
 }
 
 function SummaryCard({ title, value, color }) {
   return (
-    <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6">
+    <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
       <p className="text-gray-400 text-xs sm:text-sm mb-1">{title}</p>
-      <p className={`text-xl sm:text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
+      <p className={`text-xl sm:text-2xl font-bold tabular-nums ${color || 'text-white'}`}>{value}</p>
     </div>
   );
 }
@@ -58,6 +70,7 @@ export default function DisputesPage() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Inline "advance status" form — only one case's form is open at a
   // time, tracked by id, same pattern as AlertsPage's resolve form.
@@ -102,6 +115,19 @@ export default function DisputesPage() {
   const clearFilter = () => {
     setStatus('');
     load('');
+  };
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const params = status ? { status } : {};
+      const res = await api.get('/disputes/export', { params, responseType: 'blob' });
+      downloadBlobResponse(res, 'disputes.csv');
+    } catch (err) {
+      setError('Failed to export disputes');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const startTransitioning = (id) => {
@@ -171,7 +197,12 @@ export default function DisputesPage() {
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Disputes</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
+              <Scale size={18} className="text-cyan-400" />
+            </span>
+            Disputes
+          </h1>
           <p className="text-gray-400 mt-1">Chargeback and dispute case tracking</p>
         </div>
         <div className="flex items-center gap-3">
@@ -190,6 +221,13 @@ export default function DisputesPage() {
             <Filter size={16} /> Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
           </button>
           <button
+            onClick={exportCsv}
+            disabled={exporting}
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            <Download size={16} /> {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <button
             onClick={() => load(status)}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
           >
@@ -199,7 +237,7 @@ export default function DisputesPage() {
       </div>
 
       {showOpenForm && (
-        <div className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
+        <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-white font-semibold text-sm">Open a Dispute</h2>
             <button onClick={() => setShowOpenForm(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
@@ -216,7 +254,7 @@ export default function DisputesPage() {
                   required
                   value={openForm.transaction_id}
                   onChange={e => setOpenForm(f => ({ ...f, transaction_id: e.target.value }))}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
                 >
                   <option value="">Select a transaction…</option>
                   {(openTxnOptions || []).map(t => (
@@ -236,7 +274,7 @@ export default function DisputesPage() {
                   value={openForm.reason}
                   onChange={e => setOpenForm(f => ({ ...f, reason: e.target.value }))}
                   placeholder="I don't recognize this charge / item never arrived / billed twice, etc."
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
               <div className="mb-3">
@@ -248,7 +286,7 @@ export default function DisputesPage() {
                   value={openForm.amount_disputed}
                   onChange={e => setOpenForm(f => ({ ...f, amount_disputed: e.target.value }))}
                   placeholder={selectedTxn ? Number(selectedTxn.amount).toFixed(2) : undefined}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
               {openFormError && <p className="text-red-400 text-xs mb-3">{openFormError}</p>}
@@ -278,13 +316,13 @@ export default function DisputesPage() {
       )}
 
       {showFilters && (
-        <form onSubmit={applyFilter} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
+        <form onSubmit={applyFilter} className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Status</label>
             <select
               value={status}
               onChange={e => setStatus(e.target.value)}
-              className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="opened">Opened</option>
@@ -304,7 +342,7 @@ export default function DisputesPage() {
         </form>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         <div className="p-6 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">
             Cases
@@ -354,7 +392,7 @@ export default function DisputesPage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0 pl-14 sm:pl-0">
                       <Link to={`/transactions/${dispute.transaction_id}`} className="text-right hover:underline">
-                        <span className="text-white font-semibold block">${Number(dispute.amount_disputed).toFixed(2)}</span>
+                        <span className="text-white font-semibold tabular-nums block">${Number(dispute.amount_disputed).toFixed(2)}</span>
                         <span className="text-gray-400 text-xs">{dispute.merchant}</span>
                       </Link>
                       {isAdmin && nextSteps.length > 0 && transitioningId !== dispute.id && (
@@ -377,7 +415,7 @@ export default function DisputesPage() {
                         rows={2}
                         maxLength={2000}
                         placeholder="Evidence submitted, outcome details, etc."
-                        className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+                        className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
                       />
                       {transitionError && <p className="text-red-400 text-xs mb-3">{transitionError}</p>}
                       <div className="flex flex-wrap items-center gap-2">

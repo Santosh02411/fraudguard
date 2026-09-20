@@ -3,14 +3,21 @@ import { api } from '../context/AuthContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { Link } from 'react-router-dom';
-import { DollarSign, AlertTriangle, Activity, TrendingUp, CheckCircle, XCircle, Wifi, WifiOff } from 'lucide-react';
+import { DollarSign, AlertTriangle, Activity, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 
 function StatCard({ title, value, icon: Icon, color }) {
   return (
-    <div className="bg-[#161b22] border border-white/10 rounded-xl p-6">
-      <p className="text-gray-400 text-sm mb-1">{title}</p>
-      <p className={`text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
+    <div className="bg-[#111820] border border-white/10 rounded-xl p-6 flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-gray-400 text-sm mb-1">{title}</p>
+        <p className={`text-2xl font-bold tabular-nums ${color || 'text-white'}`}>{value}</p>
+      </div>
+      {Icon && (
+        <span className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 ${color || 'text-gray-500'}`}>
+          <Icon size={16} />
+        </span>
+      )}
     </div>
   );
 }
@@ -88,15 +95,24 @@ export default function DashboardPage() {
     </div>
   );
 
+  const greeting = (() => {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  })();
+
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-1">Welcome back, {user?.username}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+          <p className="text-gray-400 mt-1">{greeting}, {user?.username}</p>
         </div>
-        <div className={`flex items-center gap-2 text-sm ${connected ? 'text-green-400' : 'text-gray-500'}`}>
-          {connected ? <Wifi size={16} /> : <WifiOff size={16} />}
+        <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border ${
+          connected ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-gray-500 border-white/10 bg-white/5'
+        }`}>
+          <span className={`relative flex w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-gray-600'}`}>
+            {connected && <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />}
+          </span>
           {connected ? 'Live' : 'Offline'}
         </div>
       </div>
@@ -108,7 +124,7 @@ export default function DashboardPage() {
         <StatCard title="Fraud Rate" value={`${stats?.fraud_rate ?? 0}%`} icon={TrendingUp} color={stats?.fraud_rate > 20 ? 'text-red-400' : 'text-yellow-400'} />
       </div>
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Recent Transactions</h2>
           <Link to="/transactions" className="text-purple-400 hover:text-purple-300 text-sm transition-colors">View all &rarr;</Link>
@@ -135,7 +151,7 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 text-white font-medium">
                       <Link to={`/transactions/${txn.id}`} className="hover:text-purple-400 transition-colors">{txn.merchant}</Link>
                     </td>
-                    <td className="px-6 py-4 text-white">${txn.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-white tabular-nums">${txn.amount.toFixed(2)}</td>
                     <td className="px-6 py-4 text-gray-300 capitalize">{txn.category}</td>
                     <td className="px-6 py-4"><RiskBadge level={txn.risk_level} /></td>
                     <td className="px-6 py-4">
@@ -146,7 +162,7 @@ export default function DashboardPage() {
                             style={{ width: `${txn.fraud_score}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-400">{txn.fraud_score}%</span>
+                        <span className="text-xs text-gray-400 tabular-nums">{txn.fraud_score}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

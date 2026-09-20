@@ -20,10 +20,20 @@ const STATUS_STYLE = {
   in_review: 'bg-blue-500/15 text-blue-400',
   resolved: 'bg-gray-500/15 text-gray-400',
 };
+const STATUS_DOT = {
+  open: 'bg-red-400',
+  in_review: 'bg-blue-400',
+  resolved: 'bg-gray-400',
+};
 const VERDICT_LABEL = { confirmed_fraud: 'Confirmed Fraud', false_positive: 'False Positive' };
 
 function StatusBadge({ status }) {
-  return <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status]}`} />
+      {STATUS_LABEL[status]}
+    </span>
+  );
 }
 
 export default function AlertsPage() {
@@ -265,7 +275,12 @@ export default function AlertsPage() {
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Fraud Alerts</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
+              <AlertTriangle size={18} className="text-cyan-400" />
+            </span>
+            Fraud Alerts
+          </h1>
           <p className="text-gray-400 mt-1">View and manage suspicious transaction alerts</p>
         </div>
         <div className="flex items-center gap-3">
@@ -298,13 +313,13 @@ export default function AlertsPage() {
       </div>
 
       {showFilters && (
-        <form onSubmit={applyFilters} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
+        <form onSubmit={applyFilters} className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Status</label>
             <select
               value={filters.status}
               onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-              className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="open">Open</option>
@@ -317,7 +332,7 @@ export default function AlertsPage() {
             <select
               value={filters.riskLevel}
               onChange={e => setFilters(f => ({ ...f, riskLevel: e.target.value }))}
-              className="bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="medium">Medium</option>
@@ -331,7 +346,7 @@ export default function AlertsPage() {
               value={filters.merchant}
               onChange={e => setFilters(f => ({ ...f, merchant: e.target.value }))}
               placeholder="e.g. Amazon"
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
@@ -345,7 +360,7 @@ export default function AlertsPage() {
         </form>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         <div className="p-6 border-b border-white/10 flex items-center justify-between gap-4 flex-wrap">
           <h2 className="text-lg font-semibold text-white">
             Alerts
@@ -371,7 +386,7 @@ export default function AlertsPage() {
               onChange={e => setBulkNote(e.target.value)}
               placeholder="Resolution note (optional, applied to all selected)"
               maxLength={1000}
-              className="flex-1 bg-[#0d1117] border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
+              className="flex-1 bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
             />
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -454,7 +469,7 @@ export default function AlertsPage() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0 pl-14 sm:pl-0">
                     <Link to={`/transactions/${alertItem.transaction_id}`} className="text-right hover:underline">
-                      <span className="text-white font-semibold block">${Number(alertItem.amount).toFixed(2)}</span>
+                      <span className="text-white font-semibold tabular-nums block">${Number(alertItem.amount).toFixed(2)}</span>
                       <span className="text-gray-400 text-xs">{alertItem.merchant}</span>
                     </Link>
                     <div className="flex items-center gap-2 relative">
@@ -501,7 +516,7 @@ export default function AlertsPage() {
                             <FileText size={14} />
                           </button>
                           {sarMenuId === alertItem.id && (
-                            <div className="absolute right-0 top-full mt-1 bg-[#161b22] border border-white/10 rounded-lg shadow-lg py-1 z-10 w-28">
+                            <div className="absolute right-0 top-full mt-1 bg-[#111820] border border-white/10 rounded-lg shadow-lg py-1 z-10 w-28">
                               <button
                                 onClick={() => downloadSarReport(alertItem.id, 'pdf')}
                                 disabled={sarBusyId === alertItem.id}
@@ -577,7 +592,7 @@ export default function AlertsPage() {
                       rows={2}
                       maxLength={1000}
                       placeholder="Why are you resolving this the way you are?"
-                      className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
+                      className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-3"
                     />
                     {resolveError && <p className="text-red-400 text-xs mb-3">{resolveError}</p>}
                     <div className="flex flex-wrap items-center gap-2">

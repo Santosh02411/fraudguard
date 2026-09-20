@@ -14,6 +14,11 @@ const RISK_STYLE = {
   medium: 'bg-yellow-500/15 text-yellow-400',
   high: 'bg-red-500/15 text-red-400',
 };
+const RISK_DOT = {
+  low: 'bg-green-400',
+  medium: 'bg-yellow-400',
+  high: 'bg-red-400',
+};
 
 /**
  * Full transaction history — the search/filter "ops tool" view that the
@@ -84,8 +89,11 @@ export default function TransactionsPage() {
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-            <List size={26} className="text-purple-400 shrink-0" /> Transactions
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 shrink-0">
+              <List size={18} className="text-cyan-400" />
+            </span>
+            Transactions
           </h1>
           <p className="text-gray-400 mt-1 text-sm sm:text-base">Search and filter the full transaction history.</p>
         </div>
@@ -110,7 +118,7 @@ export default function TransactionsPage() {
       {exportError && <p className="text-red-400 text-sm mb-4">{exportError}</p>}
 
       {showFilters && (
-        <form onSubmit={applyFilters} className="bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <form onSubmit={applyFilters} className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1">Merchant</label>
             <input
@@ -118,7 +126,7 @@ export default function TransactionsPage() {
               value={filters.merchant}
               onChange={e => setFilters(f => ({ ...f, merchant: e.target.value }))}
               placeholder="e.g. Amazon"
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div>
@@ -126,7 +134,7 @@ export default function TransactionsPage() {
             <select
               value={filters.category}
               onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="capitalize">{c}</option>)}
@@ -137,7 +145,7 @@ export default function TransactionsPage() {
             <select
               value={filters.riskLevel}
               onChange={e => setFilters(f => ({ ...f, riskLevel: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             >
               <option value="">All</option>
               <option value="low">Low</option>
@@ -152,7 +160,7 @@ export default function TransactionsPage() {
                 type="number" min="0" step="0.01"
                 value={filters.amountMin}
                 onChange={e => setFilters(f => ({ ...f, amountMin: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
               />
             </div>
             <div>
@@ -161,7 +169,7 @@ export default function TransactionsPage() {
                 type="number" min="0" step="0.01"
                 value={filters.amountMax}
                 onChange={e => setFilters(f => ({ ...f, amountMax: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+                className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
               />
             </div>
           </div>
@@ -171,7 +179,7 @@ export default function TransactionsPage() {
               type="date"
               value={filters.dateFrom}
               onChange={e => setFilters(f => ({ ...f, dateFrom: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div>
@@ -180,7 +188,7 @@ export default function TransactionsPage() {
               type="date"
               value={filters.dateTo}
               onChange={e => setFilters(f => ({ ...f, dateTo: e.target.value }))}
-              className="w-full bg-[#0d1117] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
+              className="w-full bg-[#0a0f14] border border-white/20 rounded-lg px-3 py-2 text-sm text-white"
             />
           </div>
           <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
@@ -196,7 +204,7 @@ export default function TransactionsPage() {
         </form>
       )}
 
-      <div className="bg-[#161b22] border border-white/10 rounded-xl">
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
         {loading ? (
           <LoadingState label="Loading transactions..." />
         ) : error ? (
@@ -223,9 +231,12 @@ export default function TransactionsPage() {
                         <Link to={`/transactions/${t.id}`} className="text-white hover:text-purple-400 transition-colors">{t.merchant}</Link>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-gray-400 capitalize">{t.category}</td>
-                      <td className="px-4 sm:px-6 py-3 text-white">${Number(t.amount).toFixed(2)}</td>
+                      <td className="px-4 sm:px-6 py-3 text-white tabular-nums">${Number(t.amount).toFixed(2)}</td>
                       <td className="px-4 sm:px-6 py-3">
-                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${RISK_STYLE[t.risk_level]}`}>{t.risk_level}</span>
+                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${RISK_STYLE[t.risk_level]}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${RISK_DOT[t.risk_level]}`} />
+                          {t.risk_level}
+                        </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-gray-500">{new Date(t.created_at).toLocaleDateString()}</td>
                     </tr>
