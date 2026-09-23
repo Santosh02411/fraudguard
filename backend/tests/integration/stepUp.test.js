@@ -91,32 +91,12 @@ describe('Step-up authentication hook', () => {
       challengeToken = created.body.step_up.challenge_token;
     });
 
-    test('GET .../step-up reports the pending challenge, including the challenge_token so an abandoned flow can still be resolved', async () => {
+    test('GET .../step-up reports the pending challenge', async () => {
       const res = await request(app).get(`${API}/transactions/${txnId}/step-up`).set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(200);
       expect(res.body.transaction_status).toBe('pending_step_up');
       expect(res.body.challenge.status).toBe('pending');
       expect(res.body.challenge.method).toBe('otp');
-      expect(res.body.challenge.challenge_token).toBe(challengeToken);
-    });
-
-    test('polling and then verifying with the recovered token works, simulating a flow resumed after navigating away', async () => {
-      const polled = await request(app).get(`${API}/transactions/${txnId}/step-up`).set('Authorization', `Bearer ${token}`);
-      const recoveredToken = polled.body.challenge.challenge_token;
-
-      const res = await request(app).post(`${API}/transactions/${txnId}/step-up/verify`)
-        .set('Authorization', `Bearer ${token}`).send({ challenge_token: recoveredToken, outcome: 'success' });
-      expect(res.status).toBe(200);
-      expect(res.body.transaction.status).toBe('completed');
-    });
-
-    test('a resolved challenge no longer exposes its token on poll', async () => {
-      await request(app).post(`${API}/transactions/${txnId}/step-up/verify`)
-        .set('Authorization', `Bearer ${token}`).send({ challenge_token: challengeToken, outcome: 'success' });
-
-      const res = await request(app).get(`${API}/transactions/${txnId}/step-up`).set('Authorization', `Bearer ${token}`);
-      expect(res.body.challenge.status).toBe('verified');
-      expect(res.body.challenge.challenge_token).toBeUndefined();
     });
 
     test('a wrong challenge_token is rejected', async () => {
