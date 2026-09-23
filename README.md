@@ -600,15 +600,22 @@ coverage report as a workflow artifact.
 |---------|-------------|
 | **Dashboard** | Live stats: total transactions, fraud count, fraud rate, transaction history |
 | **Transaction Simulator** | Submit transactions manually or via realistic named scenarios; instant fraud analysis with a SHAP feature-contribution chart |
+| **Bulk Transaction Import** | Paste or upload a CSV of up to 50 transactions and score them all in one request, with client-side validation and a per-row results view |
 | **Transactions** | Full searchable/filterable transaction history (merchant, category, risk level, amount range, date range) with a permalink detail page per transaction |
-| **Fraud Alerts** | View, filter, bulk-resolve, assign, and resolve high/medium risk alerts with a `confirmed_fraud`/`false_positive` verdict and note — not just a boolean toggle |
+| **Fraud Alerts** | View, filter, bulk-resolve, assign, and resolve high/medium risk alerts with a `confirmed_fraud`/`false_positive` verdict and note — not just a boolean toggle. Each alert also has a one-click plain-language (LLM-generated, cached) explanation and, for admins, its own audit trail |
+| **In-App Notifications** | A notification bell in the navbar shows recent alerts with a live-updating unseen badge, fed by the same WebSocket stream the Alerts page uses — click to view, "seen" state is per-account |
+| **Disputes (Case Management)** | Open a chargeback/dispute directly or from a transaction's detail page; admins track it through `opened → evidence_submitted → won/lost`, with a financial-summary rollup and CSV export |
+| **Step-Up Authentication** | A medium-risk transaction can be held pending an external OTP/3DS-style verification (opt in per webhook) instead of completing immediately — the Simulator can walk through the whole hold/resolve loop |
+| **Admin Rule Builder & Fraud Rings** | Admin-editable blacklists (merchant/location/device/IP) and an amount cap, evaluated ahead of the ML model, with a dry-run impact preview before you turn one on; plus detection of account clusters sharing a device fingerprint or IP |
+| **SAR-Style Compliance Reports** | Export a PDF or CSV bundling an alert's transaction, reasoning, network/dispute status, and audit trail — an internal review document, not a completed regulatory filing |
+| **ML Model Ops** | Admin view of the trained-model registry, feature/score drift monitoring against a live-traffic baseline, and shadow/canary deployment to compare a new model version on real traffic before promoting it |
 | **Analytics** | Bar charts and pie charts of transaction volume, risk distribution, and category breakdown |
 | **Admin Panel** | View all users, their stats, promote/demote user roles, and an Integrations panel for every user's API keys/webhooks |
-| **Account Settings** | Self-service password/email change, email verification, TOTP two-factor authentication with backup codes, self-service API key/webhook management, and a data export/account deletion "Danger Zone" |
-| **Real-Time Alerts** | Dashboard, Alerts, and the Live Feed update instantly over WebSocket — no polling |
+| **Account Settings** | Self-service password/email change, email verification, TOTP two-factor authentication with backup codes, self-service API key/webhook management (with per-event subscriptions), and a data export/account deletion "Danger Zone" |
+| **Real-Time Alerts** | Dashboard, Alerts, the notification bell, and the Live Feed all update instantly over WebSocket — no polling |
 | **Live Transaction Feed** | Admin-controlled simulation streams synthetic transactions through the real fraud engine so you can watch detection happen live |
-| **API Keys & Webhooks** | Service-to-service auth (`X-API-Key`, with optional expiration and per-key rate limiting) for integrating without a human session, plus signed outbound webhooks — fired on medium/high-risk transactions, with retries that survive a server restart |
-| **CSV Export** | Transactions, Alerts, and (admin) the Audit Trail can all be exported as CSV, respecting whatever filters are active |
+| **API Keys & Webhooks** | Service-to-service auth (`X-API-Key`, with optional expiration and per-key rate limiting) for integrating without a human session, plus signed outbound webhooks — fired on medium/high-risk transactions and step-up events, with retries that survive a server restart |
+| **CSV Export** | Transactions, Alerts, Disputes, and (admin) the Audit Trail can all be exported as CSV, respecting whatever filters are active |
 | **Data Export & Deletion** | Self-service "download everything this app holds about you" (JSON) and account deletion — anonymized, not hard-deleted, so fraud history survives account closure |
 | **Observability** | `GET /metrics` — Prometheus-format process and business metrics (requests, transactions scored, alerts created, webhook deliveries) — see "Observability" below |
 | **Security** | Password strength rules, account lockout, rotating refresh tokens, forgot/reset password, email verification, TOTP 2FA, RBAC, idempotent transaction submission, and a full audit trail — see "Security" below |
@@ -1097,14 +1104,19 @@ reports the running `api_version`.
 | GET | `/api/transactions/:id` | User or API key | View a single transaction's full record, incl. SHAP explanation (audit-logged) |
 | GET | `/api/transactions/stats` | User or API key | Dashboard statistics |
 | GET | `/api/transactions/export` | User or API key | CSV export (same filters as the list endpoint) |
+| POST | `/api/transactions/bulk` | User or API key | Score up to 50 transactions in one request — same alerts/webhooks/step-up eligibility as a single POST, per-row results |
+| GET | `/api/transactions/:id/step-up` | User | Poll a held transaction's step-up challenge status (404 if it was never held) |
+| POST | `/api/transactions/:id/step-up/verify` | User | Resolve a pending step-up challenge with `success`/`failure` |
 | GET | `/api/alerts` | User | List/search alerts (paginated + filterable — see below) |
 | GET | `/api/alerts/:id` | User | View a single alert (audit-logged) |
+| GET | `/api/alerts/:id/explanation` | User | Plain-language (LLM-generated, template fallback) one-sentence explanation, cached after the first request |
 | GET | `/api/alerts/export` | User | CSV export (same filters as the list endpoint) |
 | PATCH | `/api/alerts/:id/resolve` | User | Resolve an alert with a `confirmed_fraud`/`false_positive` verdict + optional note (audit-logged) |
 | PATCH | `/api/alerts/bulk-resolve` | User | Resolve up to 100 alerts in one request, all-or-nothing (audit-logged) |
 | PATCH | `/api/alerts/:id/assign` | Admin | Assign/unassign an alert to an admin analyst (audit-logged) |
 | POST | `/api/disputes` | User | Open a dispute/chargeback on your own transaction (admin may open on a user's behalf); one open dispute per transaction (audit-logged) |
 | GET | `/api/disputes` | User | List disputes — admins see every case (optionally `?status=`), everyone else sees only their own |
+| GET | `/api/disputes/export` | User | CSV export (same `?status=` filter and ownership scoping as the list endpoint) |
 | GET | `/api/disputes/:id` | User | View a single dispute (owner or admin) |
 | PATCH | `/api/disputes/:id` | Admin | Advance a dispute's lifecycle: `opened → evidence_submitted → won/lost` (audit-logged) |
 | GET | `/api/disputes/financial-summary` | Admin | Rollup: amounts won/lost/pending and win rate over resolved cases |
@@ -1114,6 +1126,20 @@ reports the running `api_version`.
 | GET | `/api/admin/audit-logs` | Admin | Browse the audit trail (filter by action/target/user) |
 | GET | `/api/admin/audit-logs/export` | Admin | CSV export (same filters as the list endpoint) |
 | GET | `/api/admin/audit-logs/alert/:id` | Admin | Full view/resolve history for one alert |
+| GET | `/api/admin/fraud-rules` | Admin | List admin-editable blacklists (merchant/location/device/IP) and the amount cap |
+| POST | `/api/admin/fraud-rules` | Admin | Create a rule — takes effect on the next transaction scored (audit-logged) |
+| POST | `/api/admin/fraud-rules/preview` | Admin | Dry-run a candidate rule against transactions on file — count + sample of what it would have matched, creates nothing |
+| PATCH | `/api/admin/fraud-rules/:id` | Admin | Update value/threshold/reason, or enable/disable a rule (audit-logged) |
+| DELETE | `/api/admin/fraud-rules/:id` | Admin | Permanently delete a rule (audit-logged) |
+| GET | `/api/admin/fraud-rings` | Admin | Detect clusters of accounts sharing a device fingerprint or IP |
+| GET | `/api/admin/alerts/:id/sar-report` | Admin | Export a SAR-style compliance report for an alert (`?format=pdf`\|`csv`) — not a completed regulatory filing |
+| GET | `/api/admin/ml/versions` | Admin | List every trained model version in the registry |
+| GET | `/api/admin/ml/drift` | Admin | Feature/score drift report for the active model version |
+| POST | `/api/admin/ml/drift/reset` | Admin | Clear the live-traffic buffer used for drift comparison |
+| GET | `/api/admin/ml/shadow/status` | Admin | Current shadow/canary deployment status |
+| POST | `/api/admin/ml/shadow/set` | Admin | Start shadow-scoring a registry version alongside the primary |
+| POST | `/api/admin/ml/shadow/clear` | Admin | Stop shadow-scoring |
+| POST | `/api/admin/ml/shadow/promote` | Admin | Promote the shadow version to primary |
 | POST | `/api/api-keys` | User | Create an API key for your own account (shown once; optional `expiresInDays`) |
 | GET | `/api/api-keys` | User | List your own API keys (admin sees everyone's; `?mine=true` forces own-only) |
 | DELETE | `/api/api-keys/:id` | User | Revoke an API key (owner or admin) |
@@ -1175,17 +1201,87 @@ diverge from FraudGuard's own fraud call (a transaction FraudGuard
 never flagged can still be disputed, and one FraudGuard correctly
 flagged as fraud can still be lost at chargeback for lack of
 evidence). Any account owner can open a dispute on their own
-transaction from that transaction's detail page in the UI (or an admin
-on their behalf); a transaction can have at most one open dispute at a
-time. From there, `status` moves through `opened → evidence_submitted
-→ won`/`lost`, though `evidence_submitted` is optional — a case may
-also resolve straight from `opened` to `won`/`lost` (e.g. the contest
-window simply expires). Advancing the status is admin-only, the same
-"we reviewed the evidence, here's the outcome" reasoning as alert
-resolution being admin-only. `GET /api/disputes/financial-summary`
-gives admins total exposure and a win rate over resolved cases. See
+transaction — either directly from the Disputes page (pick from your
+own undisputed transactions) or from that transaction's own detail
+page — or an admin on the user's behalf; a transaction can have at
+most one open dispute at a time. From there, `status` moves through
+`opened → evidence_submitted → won`/`lost`, though `evidence_submitted`
+is optional — a case may also resolve straight from `opened` to
+`won`/`lost` (e.g. the contest window simply expires). Advancing the
+status is admin-only, the same "we reviewed the evidence, here's the
+outcome" reasoning as alert resolution being admin-only.
+`GET /api/disputes/financial-summary` gives admins total exposure and
+a win rate over resolved cases. See
 `backend/models/disputeRepository.js`'s header for the full state
 machine.
+
+**Step-up authentication:** when a transaction scores medium risk
+*and* the account has a webhook subscribed to
+`transaction.step_up_required` (or `*` — configurable per webhook
+under Account Settings → Webhooks), FraudGuard holds the transaction
+(`status: "pending_step_up"`) instead of completing it, and the
+create-transaction response carries a `step_up` challenge. FraudGuard
+never runs the actual OTP/3DS flow itself — that's the merchant's own
+flow; `POST /api/transactions/:id/step-up/verify` is where it reports
+back `success` (completes the transaction) or `failure` (blocks it).
+The Simulator page renders this as a "Step-Up Verification Required"
+panel with buttons that simulate the customer completing that flow, so
+the whole loop is visible without a real OTP provider configured. See
+`backend/models/stepUpRepository.js`.
+
+**Admin rule builder:** `/api/admin/fraud-rules` lets admins maintain
+blacklists (merchant/location/device/IP, exact match) and a single
+global amount cap, independent of the ML model — these are evaluated
+first, in `fraudEngine.js`'s `checkHardRules`, and can force
+`risk_level: "high"` regardless of what the model would have scored.
+A handful of defaults are seeded automatically once an admin account
+exists. Disabling a rule (`enabled: false`) is the usual way to turn
+it off without losing its configuration; deleting is permanent.
+Before turning one on, `POST /api/admin/fraud-rules/preview` (feature:
+rule impact preview) dry-runs the same rule_type/value/threshold
+against transactions already on file — creates nothing, just returns
+how many it would have matched and a sample — so an overly broad
+blacklist entry or too-low an amount cap gets caught before it starts
+generating alerts, not after. The Admin Panel's "Add Rule" form has a
+Preview Impact button for exactly this.
+
+**Fraud ring detection:** `/api/admin/fraud-rings` groups accounts
+that share a device fingerprint or IP address across *any* of their
+transactions — no fraud confirmation required to appear, since the
+point is surfacing a coordinated cluster before it's confirmed, not
+after. `risk` is `high` when the cluster includes a confirmed-fraud
+account or is large, `watch` for a mid-size cluster with no confirmed
+fraud yet, and `low` otherwise. See `backend/models/networkRepository.js`.
+
+**SAR-style exportable reports:** `GET /api/admin/alerts/:id/sar-report`
+(`?format=pdf` or `csv`) bundles a transaction, why it was flagged,
+its network/dispute status, and its full audit trail into one
+document — the internal review document a compliance team would
+otherwise assemble by hand. It is explicitly **not** a completed
+regulatory filing (e.g. FinCEN Form 111), and says so in its own
+footer. See `backend/services/sarReportService.js`.
+
+**ML model ops:** `/api/admin/ml/*` is a thin proxy to the Python
+ml_service's own model-management endpoints (returns 503 if
+ml_service isn't reachable). `GET /versions` lists everything in the
+registry; `GET /drift` compares a buffer of recently-scored live
+transactions against the active version's training-time baseline
+(per-feature PSI plus mean-score/high-risk-rate drift), reporting
+`insufficient_data` until enough live traffic has accumulated.
+Shadow/canary deployment (`/shadow/set|status|clear|promote`) scores
+every live transaction with both the primary and a shadow version
+simultaneously — only the primary's score is ever used, but the
+shadow's score is recorded for comparison, so a new version's behavior
+on real traffic can be evaluated before it goes live. See
+`backend/services/mlAdminClient.js` and `ml_service/app.py`.
+
+**Plain-language alert explanations:** `GET /api/alerts/:id/explanation`
+generates a single sentence explaining why an alert fired — an LLM
+call if one's configured, otherwise a template built from the
+transaction's own `fraud_reasons`, so the endpoint always returns
+something. Generated once per alert and cached on the row; available
+to the alert's owner, not just admins. See
+`backend/services/explanationService.js`.
 
 
 **Service-to-service auth:** `GET /api/transactions*` and
@@ -1198,11 +1294,27 @@ surface" under Security below for scopes and how it's stored.
 `Idempotency-Key` header so a network retry can't double-submit —
 see "Integration surface" under Security below.
 
+**Bulk transaction import:** `POST /api/transactions/bulk` scores up
+to 50 transactions in a single request — the ops-tool counterpart to
+submitting one transaction at a time. Each row runs through the exact
+same pipeline as a single `POST /api/transactions` (same alerts,
+webhooks, live feed, and step-up eligibility), and rows are scored in
+order so later rows see the velocity/history effects of earlier ones
+in the same batch. A malformed row fails the whole request before
+anything is created; a row that throws *during* scoring (rare) is
+reported per-row instead of failing the rest of the batch. The
+frontend's Bulk Import page (paste or upload a CSV, client-side
+validated against the same field rules before it's sent) is the UI
+for this. See `routes/transactions.js`'s `scoreAndCreateTransaction`,
+shared with the single-transaction endpoint.
+
 **CSV export:** `GET /api/transactions/export`, `GET /api/alerts/export`,
-and `GET /api/admin/audit-logs/export` accept the same filter query
-params as their list counterparts and return `text/csv` with a
-`Content-Disposition: attachment` header, capped at 10,000 rows. See
-"Bulk actions & CSV export" under Security above.
+`GET /api/disputes/export`, and `GET /api/admin/audit-logs/export`
+accept the same filter query params as their list counterparts and
+return `text/csv` with a `Content-Disposition: attachment` header,
+capped at 10,000 rows (disputes has no such cap — its own list isn't
+paginated either). See "Bulk actions & CSV export" under Security
+above.
 
 ---
 
