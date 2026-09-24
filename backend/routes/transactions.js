@@ -426,7 +426,22 @@ router.get('/:id/step-up', flexibleAuth, requireScope('transactions:read'), vali
   res.json({
     transaction_id: txn.id,
     transaction_status: txn.status,
-    challenge: { status: challenge.status, method: challenge.method, expires_at: challenge.expires_at, verified_at: challenge.verified_at },
+    challenge: {
+      status: challenge.status,
+      method: challenge.method,
+      expires_at: challenge.expires_at,
+      verified_at: challenge.verified_at,
+      // Safe to return here even though POST .../verify doesn't require
+      // this endpoint to have been called first: this route already
+      // enforces the exact same ownership/admin check the resolve
+      // endpoint does (see the authorization check above), so a caller
+      // who can reach this can already reach that. Without this, a
+      // transaction abandoned mid-flow (e.g. the Simulator tab closed
+      // before the challenge was resolved) would be stuck in
+      // pending_step_up forever — the token was otherwise only ever
+      // shown once, at creation.
+      challenge_token: challenge.status === 'pending' ? challenge.challenge_token : undefined,
+    },
   });
 }));
 
