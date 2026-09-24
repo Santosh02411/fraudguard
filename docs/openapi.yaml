@@ -1023,15 +1023,6 @@ paths:
         `POST /transactions` below and `models/stepUpRepository.js`.
         404s if this transaction was never held for one. Only the
         transaction's owner or an admin may poll it.
-
-        While the challenge is still `pending`, the response includes
-        `challenge.challenge_token` — the same authorization boundary
-        that gates this endpoint (owner or admin) already gates
-        `POST .../step-up/verify`, so this is how a flow abandoned
-        before it was resolved (e.g. the browser tab was closed) can
-        still be recovered and completed later, rather than being
-        stuck in `pending_step_up` forever. Once resolved, the token
-        is omitted.
       parameters:
         - name: id
           in: path
@@ -1053,7 +1044,6 @@ paths:
                       method: { type: string, example: otp }
                       expires_at: { type: string, format: date-time }
                       verified_at: { type: string, format: date-time, nullable: true }
-                      challenge_token: { type: string, description: "Only present while status is pending — see above" }
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
