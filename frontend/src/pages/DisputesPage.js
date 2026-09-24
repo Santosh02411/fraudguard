@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
+import StatCard from '../components/StatCard';
+import { staggerDelay } from '../utils/animation';
 
 const STATUS_LABEL = {
   opened: 'Opened',
@@ -41,15 +43,6 @@ function StatusBadge({ status }) {
       <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status]}`} />
       {STATUS_LABEL[status]}
     </span>
-  );
-}
-
-function SummaryCard({ title, value, color }) {
-  return (
-    <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
-      <p className="text-gray-400 text-xs sm:text-sm mb-1">{title}</p>
-      <p className={`text-xl sm:text-2xl font-bold tabular-nums ${color || 'text-white'}`}>{value}</p>
-    </div>
   );
 }
 
@@ -240,7 +233,7 @@ export default function DisputesPage() {
         <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-5 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-white font-semibold text-sm">Open a Dispute</h2>
-            <button onClick={() => setShowOpenForm(false)} className="text-gray-400 hover:text-white"><X size={16} /></button>
+            <button onClick={() => setShowOpenForm(false)} className="text-gray-400 hover:text-white transition-colors"><X size={16} /></button>
           </div>
           {openTxnLoading ? (
             <p className="text-gray-500 text-sm">Loading your transactions...</p>
@@ -304,12 +297,23 @@ export default function DisputesPage() {
 
       {isAdmin && summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <SummaryCard title="Total Disputes" value={summary.total_disputes} />
-          <SummaryCard title="Amount Won" value={`$${summary.amount_won.toFixed(2)}`} color="text-green-400" />
-          <SummaryCard title="Amount Lost" value={`$${summary.amount_lost.toFixed(2)}`} color="text-red-400" />
-          <SummaryCard
+          <StatCard title="Total Disputes" value={summary.total_disputes} />
+          <StatCard
+            title="Amount Won"
+            value={summary.amount_won}
+            format={(v) => `$${v.toFixed(2)}`}
+            color="text-green-400"
+          />
+          <StatCard
+            title="Amount Lost"
+            value={summary.amount_lost}
+            format={(v) => `$${v.toFixed(2)}`}
+            color="text-red-400"
+          />
+          <StatCard
             title="Win Rate"
-            value={summary.win_rate === null ? '—' : `${summary.win_rate}%`}
+            value={summary.win_rate === null ? '—' : summary.win_rate}
+            format={(v) => `${v.toFixed(0)}%`}
             color={summary.win_rate !== null && summary.win_rate < 50 ? 'text-yellow-400' : 'text-green-400'}
           />
         </div>
@@ -335,7 +339,7 @@ export default function DisputesPage() {
             Apply
           </button>
           {activeFilterCount > 0 && (
-            <button type="button" onClick={clearFilter} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2">
+            <button type="button" onClick={clearFilter} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
               <X size={14} /> Clear
             </button>
           )}
@@ -358,10 +362,14 @@ export default function DisputesPage() {
           <EmptyState icon={Scale} title="No disputes match these filters" subtitle={activeFilterCount > 0 ? 'Try clearing a filter.' : 'Use "Open a Dispute" above, or start from a transaction\u2019s detail page.'} />
         ) : (
           <div className="divide-y divide-white/5">
-            {disputes.map(dispute => {
+            {disputes.map((dispute, i) => {
               const nextSteps = NEXT_STEPS[dispute.status] || [];
               return (
-                <div key={dispute.id} className="p-6 hover:bg-white/5 transition-colors">
+                <div
+                  key={dispute.id}
+                  className="p-6 hover:bg-white/5 transition-colors animate-row-in"
+                  style={staggerDelay(i)}
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
@@ -391,7 +399,7 @@ export default function DisputesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0 pl-14 sm:pl-0">
-                      <Link to={`/transactions/${dispute.transaction_id}`} className="text-right hover:underline">
+                      <Link to={`/transactions/${dispute.transaction_id}`} className="text-right hover:underline transition-colors">
                         <span className="text-white font-semibold tabular-nums block">${Number(dispute.amount_disputed).toFixed(2)}</span>
                         <span className="text-gray-400 text-xs">{dispute.merchant}</span>
                       </Link>
@@ -448,7 +456,7 @@ export default function DisputesPage() {
                         )}
                         <button
                           onClick={() => setTransitioningId(null)}
-                          className="text-gray-400 hover:text-white text-sm px-3 py-1.5"
+                          className="text-gray-400 hover:text-white text-sm px-3 py-1.5 transition-colors"
                         >
                           Cancel
                         </button>

@@ -81,10 +81,10 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-[#111820] border border-white/10 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
+        <div className="absolute right-0 mt-2 w-80 bg-[#111820] border border-white/10 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto animate-menu-in">
           <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
             <p className="text-white text-sm font-semibold">Notifications</p>
-            <Link to="/alerts" onClick={() => setOpen(false)} className="text-purple-400 hover:text-purple-300 text-xs">
+            <Link to="/alerts" onClick={() => setOpen(false)} className="text-purple-400 hover:text-purple-300 text-xs transition-colors">
               View all
             </Link>
           </div>
@@ -97,7 +97,7 @@ export default function NotificationBell() {
                   key={a.id}
                   to="/alerts"
                   onClick={() => setOpen(false)}
-                  className="block px-4 py-3 hover:bg-white/5 transition-colors"
+                  className="block px-4 py-3 hover:bg-white/5 transition-colors hover-lift"
                 >
                   <div className="flex items-start gap-2">
                     <AlertTriangle size={14} className={`mt-0.5 shrink-0 ${a.risk_level === 'high' ? 'text-red-400' : 'text-yellow-400'}`} />

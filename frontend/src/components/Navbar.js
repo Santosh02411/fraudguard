@@ -87,7 +87,7 @@ export default function Navbar() {
           </button>
           <button
             onClick={() => setMobileOpen((v) => !v)}
-            className="lg:hidden text-gray-300 hover:text-white p-2 -mr-2"
+            className="lg:hidden text-gray-300 hover:text-white p-2 -mr-2 transition-colors"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -96,7 +96,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden mt-3 pb-2 flex flex-col gap-1">
+        <div className="lg:hidden mt-3 pb-2 flex flex-col gap-1 animate-page-in">
           {links}
           <NavLink to="/settings" className={navClass} onClick={() => setMobileOpen(false)}>
             <UserCog size={16} /> Account Settings

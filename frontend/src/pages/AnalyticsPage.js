@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { LoadingState, ErrorState } from '../components/ui/States';
 import { BarChart2 } from 'lucide-react';
+import { staggerDelay } from '../utils/animation';
 
 export default function AnalyticsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -100,7 +101,7 @@ export default function AnalyticsPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Daily volume */}
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-6 animate-row-in" style={staggerDelay(0, { stepMs: 80 })}>
               <h2 className="text-lg font-semibold text-white mb-4">Transaction Volume by Day</h2>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={dailyData}>
@@ -115,7 +116,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Risk breakdown pie */}
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
+            <div className="bg-[#111820] border border-white/10 rounded-xl p-6 animate-row-in" style={staggerDelay(1, { stepMs: 80 })}>
               <h2 className="text-lg font-semibold text-white mb-4">Risk Level Distribution</h2>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -129,7 +130,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Category breakdown */}
-          <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-6 animate-row-in" style={staggerDelay(2, { stepMs: 80 })}>
             <h2 className="text-lg font-semibold text-white mb-4">Amount by Category</h2>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={categoryData} layout="vertical">

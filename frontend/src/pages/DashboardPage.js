@@ -5,22 +5,8 @@ import { useSocket } from '../context/SocketContext';
 import { Link } from 'react-router-dom';
 import { DollarSign, AlertTriangle, Activity, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
-
-function StatCard({ title, value, icon: Icon, color }) {
-  return (
-    <div className="bg-[#111820] border border-white/10 rounded-xl p-6 flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-gray-400 text-sm mb-1">{title}</p>
-        <p className={`text-2xl font-bold tabular-nums ${color || 'text-white'}`}>{value}</p>
-      </div>
-      {Icon && (
-        <span className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 ${color || 'text-gray-500'}`}>
-          <Icon size={16} />
-        </span>
-      )}
-    </div>
-  );
-}
+import StatCard from '../components/StatCard';
+import { staggerDelay } from '../utils/animation';
 
 function RiskBadge({ level }) {
   const styles = {
@@ -118,10 +104,33 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Transactions" value={stats?.total_transactions ?? 0} icon={Activity} />
-        <StatCard title="Fraud Detected" value={stats?.fraud_count ?? 0} icon={AlertTriangle} color="text-red-400" />
-        <StatCard title="Total Amount" value={`$${(stats?.total_amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={DollarSign} color="text-green-400" />
-        <StatCard title="Fraud Rate" value={`${stats?.fraud_rate ?? 0}%`} icon={TrendingUp} color={stats?.fraud_rate > 20 ? 'text-red-400' : 'text-yellow-400'} />
+        <StatCard
+          title="Total Transactions"
+          value={stats?.total_transactions ?? 0}
+          format={(v) => Math.round(v).toLocaleString()}
+          icon={Activity}
+        />
+        <StatCard
+          title="Fraud Detected"
+          value={stats?.fraud_count ?? 0}
+          format={(v) => Math.round(v).toLocaleString()}
+          icon={AlertTriangle}
+          color="text-red-400"
+        />
+        <StatCard
+          title="Total Amount"
+          value={stats?.total_amount ?? 0}
+          format={(v) => `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={DollarSign}
+          color="text-green-400"
+        />
+        <StatCard
+          title="Fraud Rate"
+          value={stats?.fraud_rate ?? 0}
+          format={(v) => `${v.toFixed(2)}%`}
+          icon={TrendingUp}
+          color={stats?.fraud_rate > 20 ? 'text-red-400' : 'text-yellow-400'}
+        />
       </div>
 
       <div className="bg-[#111820] border border-white/10 rounded-xl">
@@ -146,8 +155,12 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map(txn => (
-                  <tr key={txn.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                {transactions.map((txn, i) => (
+                  <tr
+                    key={txn.id}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors animate-row-in"
+                    style={staggerDelay(i)}
+                  >
                     <td className="px-6 py-4 text-white font-medium">
                       <Link to={`/transactions/${txn.id}`} className="hover:text-purple-400 transition-colors">{txn.merchant}</Link>
                     </td>

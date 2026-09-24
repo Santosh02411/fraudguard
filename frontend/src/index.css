@@ -40,6 +40,66 @@ body {
 ::-webkit-scrollbar-thumb { background: #1e2a35; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #2d3f4e; }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Applied to the routed page container in App.js — every navigation
+   gets the same quiet entrance instead of content just snapping into
+   place. */
+.animate-page-in {
+  animation: fade-in-up 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* For dropdowns/menus/popovers (NotificationBell, inline forms) —
+   shorter, with a touch of scale so it reads as "opening from its
+   trigger" rather than a generic fade. */
+.animate-menu-in {
+  animation: scale-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+/* A single, quiet press affordance on every button in the app — most
+   already animate color via Tailwind's transition-colors utility;
+   this adds the transform half so a click always feels tactile, not
+   just a static color swap. */
+button:not(:disabled) {
+  transition: transform 100ms ease, color 150ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Cards/rows opted into this class get a quiet lift on hover — used
+   only where the element is actually interactive (a link or a click
+   handler), never on purely informational cards, so the affordance
+   stays honest. */
+.hover-lift {
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 211, 238, 0.25);
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Applied per-row/per-card with an inline animation-delay (see the
+   rowDelay/staggerDelay helpers in utils/animation.js) so a freshly
+   loaded table or list enters as a quiet cascade instead of every row
+   popping in at once. Capped by the helper so a long list doesn't end
+   up with a visibly staggered tail. */
+.animate-row-in {
+  animation: row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

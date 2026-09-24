@@ -12,13 +12,13 @@ export function LoadingState({ label = 'Loading...', rows }) {
     return (
       <div className="p-6 space-y-3 animate-pulse">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="h-10 bg-white/5 rounded-lg" />
+          <div key={i} className="h-10 bg-white/5 rounded-lg" style={{ animationDelay: `${i * 40}ms` }} />
         ))}
       </div>
     );
   }
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-12 text-gray-400">
+    <div className="flex flex-col items-center justify-center gap-3 p-12 text-gray-400 animate-page-in">
       <RefreshCw size={22} className="animate-spin text-purple-400" />
       <p className="text-sm">{label}</p>
     </div>
@@ -32,7 +32,7 @@ export function LoadingState({ label = 'Loading...', rows }) {
  */
 export function ErrorState({ message = 'Something went wrong.', onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 p-12 text-center animate-page-in">
       <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
         <AlertCircle size={22} className="text-red-400" />
       </div>
@@ -43,9 +43,9 @@ export function ErrorState({ message = 'Something went wrong.', onRetry }) {
       {onRetry && (
         <button
           onClick={onRetry}
-          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-200 px-4 py-2 rounded-lg text-sm transition-colors mt-1"
+          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-200 px-4 py-2 rounded-lg text-sm transition-colors mt-1"
         >
-          <RefreshCw size={14} /> Retry
+          <RefreshCw size={14} className="transition-transform duration-500 group-hover:rotate-180" /> Retry
         </button>
       )}
     </div>
@@ -57,7 +57,7 @@ export function ErrorState({ message = 'Something went wrong.', onRetry }) {
  */
 export function EmptyState({ icon: Icon = Inbox, title = 'Nothing here yet', subtitle }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 p-12 text-center text-gray-500">
+    <div className="flex flex-col items-center justify-center gap-2 p-12 text-center text-gray-500 animate-page-in">
       <Icon size={36} className="opacity-30 mb-1" />
       <p>{title}</p>
       {subtitle && <p className="text-xs text-gray-600">{subtitle}</p>}

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
+import { staggerDelay } from '../utils/animation';
 
 const PAGE_SIZE = 20;
 const EMPTY_FILTERS = { status: '', riskLevel: '', merchant: '' };
@@ -353,7 +354,7 @@ export default function AlertsPage() {
             Apply
           </button>
           {activeFilterCount > 0 && (
-            <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2">
+            <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
               <X size={14} /> Clear
             </button>
           )}
@@ -405,7 +406,7 @@ export default function AlertsPage() {
               </button>
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-gray-400 hover:text-white text-sm px-2 py-1.5"
+                className="text-gray-400 hover:text-white text-sm px-2 py-1.5 transition-colors"
               >
                 Clear
               </button>
@@ -422,8 +423,12 @@ export default function AlertsPage() {
           <EmptyState icon={CheckCircle} title="No alerts match these filters" subtitle={activeFilterCount > 0 ? 'Try clearing a filter.' : 'All clear!'} />
         ) : (
           <div className="divide-y divide-white/5">
-            {alerts.map(alertItem => (
-              <div key={alertItem.id} className="p-6 hover:bg-white/5 transition-colors">
+            {alerts.map((alertItem, i) => (
+              <div
+                key={alertItem.id}
+                className="p-6 hover:bg-white/5 transition-colors animate-row-in"
+                style={staggerDelay(i)}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                     {alertItem.status !== 'resolved' && (
@@ -468,7 +473,7 @@ export default function AlertsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 pl-14 sm:pl-0">
-                    <Link to={`/transactions/${alertItem.transaction_id}`} className="text-right hover:underline">
+                    <Link to={`/transactions/${alertItem.transaction_id}`} className="text-right hover:underline transition-colors">
                       <span className="text-white font-semibold tabular-nums block">${Number(alertItem.amount).toFixed(2)}</span>
                       <span className="text-gray-400 text-xs">{alertItem.merchant}</span>
                     </Link>
@@ -516,18 +521,18 @@ export default function AlertsPage() {
                             <FileText size={14} />
                           </button>
                           {sarMenuId === alertItem.id && (
-                            <div className="absolute right-0 top-full mt-1 bg-[#111820] border border-white/10 rounded-lg shadow-lg py-1 z-10 w-28">
+                            <div className="absolute right-0 top-full mt-1 bg-[#111820] border border-white/10 rounded-lg shadow-lg py-1 z-10 w-28 animate-menu-in">
                               <button
                                 onClick={() => downloadSarReport(alertItem.id, 'pdf')}
                                 disabled={sarBusyId === alertItem.id}
-                                className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                                className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50 transition-colors"
                               >
                                 PDF
                               </button>
                               <button
                                 onClick={() => downloadSarReport(alertItem.id, 'csv')}
                                 disabled={sarBusyId === alertItem.id}
-                                className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                                className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50 transition-colors"
                               >
                                 CSV
                               </button>
@@ -612,7 +617,7 @@ export default function AlertsPage() {
                       </button>
                       <button
                         onClick={() => setResolvingId(null)}
-                        className="text-gray-400 hover:text-white text-sm px-3 py-1.5"
+                        className="text-gray-400 hover:text-white text-sm px-3 py-1.5 transition-colors"
                       >
                         Cancel
                       </button>

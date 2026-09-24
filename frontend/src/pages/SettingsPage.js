@@ -143,7 +143,7 @@ function ChangeEmailCard({ user, onUpdated }) {
           <button
             onClick={resendVerification}
             disabled={resending}
-            className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50"
+            className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 transition-colors"
           >
             {resending ? 'Sending...' : 'Resend verification email'}
           </button>
@@ -269,7 +269,7 @@ function MfaCard({ user, onUpdated }) {
               <button type="submit" disabled={loading} className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 {loading ? 'Disabling...' : 'Disable 2FA'}
               </button>
-              <button type="button" onClick={() => { setStep('idle'); setError(''); }} className="text-gray-400 hover:text-white text-sm px-3 py-2">
+              <button type="button" onClick={() => { setStep('idle'); setError(''); }} className="text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
                 Cancel
               </button>
             </div>
@@ -307,7 +307,7 @@ function MfaCard({ user, onUpdated }) {
             <button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               {loading ? 'Verifying...' : 'Enable 2FA'}
             </button>
-            <button type="button" onClick={() => { setStep('idle'); setSetupData(null); setError(''); }} className="text-gray-400 hover:text-white text-sm px-3 py-2">
+            <button type="button" onClick={() => { setStep('idle'); setSetupData(null); setError(''); }} className="text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
               Cancel
             </button>
           </div>
@@ -370,9 +370,9 @@ function ApiKeysCard() {
           <p className="text-green-400 text-sm font-medium mb-2">API key created — copy it now, it won't be shown again:</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-black/30 rounded px-3 py-2 text-xs text-gray-200 break-all">{newKey.key}</code>
-            <button onClick={copyKey} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300 shrink-0"><Copy size={14} /></button>
+            <button onClick={copyKey} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300 shrink-0 transition-colors"><Copy size={14} /></button>
           </div>
-          <button onClick={() => setNewKey(null)} className="text-gray-400 hover:text-white text-xs mt-2">Dismiss</button>
+          <button onClick={() => setNewKey(null)} className="text-gray-400 hover:text-white text-xs mt-2 transition-colors">Dismiss</button>
         </div>
       )}
 
@@ -392,7 +392,7 @@ function ApiKeysCard() {
                 </p>
               </div>
               {!k.revoked_at && (
-                <button onClick={() => revoke(k.id)} className="p-2 text-gray-400 hover:text-red-400 shrink-0" title="Revoke">
+                <button onClick={() => revoke(k.id)} className="p-2 text-gray-400 hover:text-red-400 shrink-0 transition-colors" title="Revoke">
                   <Trash2 size={14} />
                 </button>
               )}
@@ -538,10 +538,10 @@ function WebhooksCard() {
           <p className="text-green-400 text-sm font-medium mb-2">Webhook created — save this signing secret now, it won't be shown again:</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-black/30 rounded px-3 py-2 text-xs text-gray-200 break-all">{newWebhook.secret}</code>
-            <button onClick={copySecret} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300 shrink-0"><Copy size={14} /></button>
+            <button onClick={copySecret} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300 shrink-0 transition-colors"><Copy size={14} /></button>
           </div>
           <p className="text-gray-500 text-xs mt-2">Use it to verify the <code>X-FraudGuard-Signature</code> header on every delivery.</p>
-          <button onClick={() => setNewWebhook(null)} className="text-gray-400 hover:text-white text-xs mt-2">Dismiss</button>
+          <button onClick={() => setNewWebhook(null)} className="text-gray-400 hover:text-white text-xs mt-2 transition-colors">Dismiss</button>
         </div>
       )}
 
@@ -559,12 +559,12 @@ function WebhooksCard() {
                   <p className="text-gray-500 text-xs">{w.events.join(', ')} &middot; {w.active ? <span className="text-green-400">active</span> : <span className="text-gray-500">paused</span>}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => (editingId === w.id ? setEditingId(null) : startEditingEvents(w))} className="p-2 text-gray-400 hover:text-white" title="Edit event subscriptions"><Code2 size={14} /></button>
-                  <button onClick={() => viewDeliveries(w.id)} className="p-2 text-gray-400 hover:text-white" title="View deliveries"><Eye size={14} /></button>
-                  <button onClick={() => toggleActive(w)} className="p-2 text-gray-400 hover:text-white" title={w.active ? 'Pause' : 'Activate'}>
+                  <button onClick={() => (editingId === w.id ? setEditingId(null) : startEditingEvents(w))} className="p-2 text-gray-400 hover:text-white transition-colors" title="Edit event subscriptions"><Code2 size={14} /></button>
+                  <button onClick={() => viewDeliveries(w.id)} className="p-2 text-gray-400 hover:text-white transition-colors" title="View deliveries"><Eye size={14} /></button>
+                  <button onClick={() => toggleActive(w)} className="p-2 text-gray-400 hover:text-white transition-colors" title={w.active ? 'Pause' : 'Activate'}>
                     {w.active ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                   </button>
-                  <button onClick={() => remove(w.id)} className="p-2 text-gray-400 hover:text-red-400" title="Delete"><Trash2 size={14} /></button>
+                  <button onClick={() => remove(w.id)} className="p-2 text-gray-400 hover:text-red-400 transition-colors" title="Delete"><Trash2 size={14} /></button>
                 </div>
               </div>
               {editingId === w.id && (
@@ -579,7 +579,7 @@ function WebhooksCard() {
                     >
                       {editSaving ? 'Saving...' : 'Save events'}
                     </button>
-                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-white text-xs px-2">Cancel</button>
+                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-white text-xs px-2 transition-colors">Cancel</button>
                   </div>
                 </div>
               )}
@@ -713,7 +713,7 @@ function DataPrivacyCard() {
               <button
                 type="button"
                 onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); setDeleteError(''); }}
-                className="text-gray-400 hover:text-white text-sm px-3 py-2"
+                className="text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors"
               >
                 Cancel
               </button>

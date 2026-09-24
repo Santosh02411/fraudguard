@@ -179,7 +179,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setMfaToken(null); setMfaCode(''); setError(''); }}
-                  className="w-full text-gray-400 hover:text-white text-sm py-1"
+                  className="w-full text-gray-400 hover:text-white text-sm py-1 transition-colors"
                 >
                   Back to login
                 </button>
@@ -271,7 +271,7 @@ export default function LoginPage() {
                         <button
                           type="button"
                           onClick={() => { setMode('forgot'); setError(''); setMessage(''); }}
-                          className="text-xs text-cyan-400 hover:text-cyan-300 mb-1.5"
+                          className="text-xs text-cyan-400 hover:text-cyan-300 mb-1.5 transition-colors"
                         >
                           Forgot password?
                         </button>
@@ -311,7 +311,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => { setMode('login'); setError(''); setMessage(''); }}
-                    className="w-full text-gray-400 hover:text-white text-sm py-1"
+                    className="w-full text-gray-400 hover:text-white text-sm py-1 transition-colors"
                   >
                     Back to login
                   </button>
@@ -322,7 +322,7 @@ export default function LoginPage() {
             {mode === 'forgot' && message && (
               <button
                 onClick={() => { setMode('login'); setMessage(''); }}
-                className="w-full text-gray-400 hover:text-white text-sm py-1 mt-4"
+                className="w-full text-gray-400 hover:text-white text-sm py-1 mt-4 transition-colors"
               >
                 Back to login
               </button>
@@ -336,7 +336,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-gray-500 text-xs mt-4">
-            Verifying your email? <Link to="/verify-email" className="text-cyan-400 hover:text-cyan-300">Enter your verification link here</Link>
+            Verifying your email? <Link to="/verify-email" className="text-cyan-400 hover:text-cyan-300 transition-colors">Enter your verification link here</Link>
           </p>
         </div>
       </div>

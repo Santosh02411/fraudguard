@@ -248,7 +248,7 @@ export default function NewTransactionPage() {
                   key={s.id}
                   type="button"
                   onClick={() => applyScenario(s)}
-                  className={`w-full text-left flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                  className={`w-full text-left flex items-start gap-3 p-3 rounded-lg border transition-colors hover-lift ${
                     active
                       ? 'bg-purple-500/10 border-purple-500/50'
                       : 'bg-black/20 border-white/5 hover:border-white/20 hover:bg-white/5'

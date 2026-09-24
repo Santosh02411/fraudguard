@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Filter, X, ChevronLeft, ChevronRight, List, Download } from 'lucide-react';
 import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
+import { staggerDelay } from '../utils/animation';
 
 const PAGE_SIZE = 20;
 const EMPTY_FILTERS = { merchant: '', category: '', riskLevel: '', amountMin: '', amountMax: '', dateFrom: '', dateTo: '' };
@@ -196,7 +197,7 @@ export default function TransactionsPage() {
               Apply
             </button>
             {activeFilterCount > 0 && (
-              <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2">
+              <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
                 <X size={14} /> Clear
               </button>
             )}
@@ -225,8 +226,12 @@ export default function TransactionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map(t => (
-                    <tr key={t.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                  {transactions.map((t, i) => (
+                    <tr
+                      key={t.id}
+                      className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors animate-row-in"
+                      style={staggerDelay(i)}
+                    >
                       <td className="px-4 sm:px-6 py-3">
                         <Link to={`/transactions/${t.id}`} className="text-white hover:text-purple-400 transition-colors">{t.merchant}</Link>
                       </td>

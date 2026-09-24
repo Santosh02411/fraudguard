@@ -33,9 +33,13 @@ function Layout({ children }) {
     <div className="min-h-screen bg-[#0a0f14]">
       <Navbar />
       {/* resetKey: a crash on one page recovers automatically once the
-          user navigates away, instead of staying broken for the session. */}
+          user navigates away, instead of staying broken for the session.
+          The same pathname also keys the fade-in below, so it replays on
+          every navigation rather than only on first mount. */}
       <main>
-        <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>
+        <div key={location.pathname} className="animate-page-in">
+          <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>
+        </div>
       </main>
     </div>
   );

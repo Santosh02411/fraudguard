@@ -105,7 +105,7 @@ export default function VerifyEmailPage() {
         </div>
 
         <p className="text-center text-gray-500 text-xs mt-4">
-          <Link to="/login" className="text-purple-400 hover:text-purple-300">Back to login</Link>
+          <Link to="/login" className="text-purple-400 hover:text-purple-300 transition-colors">Back to login</Link>
         </p>
       </div>
     </div>

@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { LoadingState, ErrorState } from '../components/ui/States';
 import { downloadBlobResponse } from '../utils/download';
+import StatCard from '../components/StatCard';
+import { staggerDelay } from '../utils/animation';
 
 const TABS = [
   { key: 'overview', label: 'Overview', icon: Users },
@@ -38,15 +40,6 @@ const DRIFT_STATUS_STYLE = {
   significant_drift: 'bg-red-500/15 text-red-400',
   insufficient_data: 'bg-gray-500/15 text-gray-400',
 };
-
-function StatCard({ title, value, color }) {
-  return (
-    <div className="bg-[#111820] border border-white/10 rounded-xl p-6">
-      <p className="text-gray-400 text-sm mb-1">{title}</p>
-      <p className={`text-2xl font-bold ${color || 'text-white'}`}>{value}</p>
-    </div>
-  );
-}
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -406,7 +399,12 @@ export default function AdminPage() {
             <StatCard title="Total Users" value={stats?.total_users ?? 0} />
             <StatCard title="System Transactions" value={stats?.total_transactions ?? 0} />
             <StatCard title="Active Alerts" value={stats?.active_alerts ?? 0} color="text-yellow-400" />
-            <StatCard title="System Fraud Rate" value={`${stats?.system_fraud_rate ?? 0}%`} color={stats?.system_fraud_rate > 15 ? 'text-red-400' : 'text-orange-400'} />
+            <StatCard
+              title="System Fraud Rate"
+              value={stats?.system_fraud_rate ?? 0}
+              format={(v) => `${v.toFixed(1)}%`}
+              color={stats?.system_fraud_rate > 15 ? 'text-red-400' : 'text-orange-400'}
+            />
           </div>
 
           <div className="bg-[#111820] border border-white/10 rounded-xl">
@@ -428,8 +426,8 @@ export default function AdminPage() {
                 <tbody>
                   {users.length === 0 ? (
                     <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No users found</td></tr>
-                  ) : users.map(u => (
-                    <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  ) : users.map((u, i) => (
+                    <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                       <td className="px-6 py-4 text-white font-medium">{u.username}</td>
                       <td className="px-6 py-4 text-gray-300">{u.email}</td>
                       <td className="px-6 py-4">
@@ -592,9 +590,9 @@ export default function AdminPage() {
               <tbody>
                 {fraudRules.length === 0 ? (
                   <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No fraud rules configured</td></tr>
-                ) : fraudRules.map(rule => (
+                ) : fraudRules.map((rule, i) => (
                   <React.Fragment key={rule.id}>
-                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                       <td className="px-6 py-3 text-white text-sm">{RULE_TYPE_LABEL[rule.rule_type] || rule.rule_type}</td>
                       <td className="px-6 py-3 text-gray-300 text-sm font-mono">
                         {rule.rule_type === 'amount_cap' ? `$${Number(rule.threshold).toLocaleString()}` : rule.value}
@@ -679,7 +677,7 @@ export default function AdminPage() {
                             >
                               {editRuleBusy ? 'Saving...' : 'Save Changes'}
                             </button>
-                            <button onClick={() => setEditingRuleId(null)} className="text-gray-400 hover:text-white text-sm px-3 py-2">
+                            <button onClick={() => setEditingRuleId(null)} className="text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
                               Cancel
                             </button>
                           </div>
@@ -710,8 +708,8 @@ export default function AdminPage() {
             <p className="px-6 py-8 text-center text-gray-500">No clusters of 2+ accounts detected</p>
           ) : (
             <div className="divide-y divide-white/5">
-              {fraudRings.map(ring => (
-                <div key={ring.ring_id} className="p-6">
+              {fraudRings.map((ring, i) => (
+                <div key={ring.ring_id} className="p-6 animate-row-in" style={staggerDelay(i)}>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${RING_RISK_STYLE[ring.risk]}`}>
                       {ring.risk} risk
@@ -775,8 +773,8 @@ export default function AdminPage() {
                     <tbody>
                       {mlVersions.length === 0 ? (
                         <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No trained versions in the registry</td></tr>
-                      ) : mlVersions.map(v => (
-                        <tr key={v.version} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      ) : mlVersions.map((v, i) => (
+                        <tr key={v.version} className="border-b border-white/5 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                           <td className="px-6 py-3 text-white font-mono text-sm">{v.version}</td>
                           <td className="px-6 py-3 text-gray-300 text-sm">{v.best_model_type}</td>
                           <td className="px-6 py-3 text-gray-300 text-sm">{v.pr_auc}</td>
@@ -933,8 +931,8 @@ export default function AdminPage() {
                   <tbody>
                     {apiKeys.length === 0 ? (
                       <tr><td className="px-6 py-6 text-center text-gray-500">No API keys</td></tr>
-                    ) : apiKeys.map(k => (
-                      <tr key={k.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    ) : apiKeys.map((k, i) => (
+                      <tr key={k.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                         <td className="px-6 py-3">
                           <p className="text-white">{k.name}</p>
                           <p className="text-gray-500 text-xs"><code>{k.key_prefix}...</code> &middot; {k.username}</p>
@@ -963,8 +961,8 @@ export default function AdminPage() {
                   <tbody>
                     {webhooks.length === 0 ? (
                       <tr><td className="px-6 py-6 text-center text-gray-500">No webhooks</td></tr>
-                    ) : webhooks.map(w => (
-                      <tr key={w.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    ) : webhooks.map((w, i) => (
+                      <tr key={w.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                         <td className="px-6 py-3 min-w-0">
                           <p className="text-white truncate">{w.url}</p>
                           <p className="text-gray-500 text-xs">
@@ -1015,8 +1013,8 @@ export default function AdminPage() {
               <tbody>
                 {auditLogs.length === 0 ? (
                   <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No audit events yet</td></tr>
-                ) : auditLogs.map(log => (
-                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                ) : auditLogs.map((log, i) => (
+                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors animate-row-in" style={staggerDelay(i)}>
                     <td className="px-6 py-3 text-gray-400 text-sm whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
                     <td className="px-6 py-3 text-white text-sm">{log.username || 'unknown'}</td>
                     <td className="px-6 py-3 text-gray-300 text-sm font-mono">{log.action}</td>

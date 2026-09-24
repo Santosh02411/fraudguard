@@ -6,6 +6,8 @@ import {
   Upload, Download, FileText, CheckCircle, XCircle, AlertTriangle,
   ShieldQuestion, Trash2, Send,
 } from 'lucide-react';
+import StatCard from '../components/StatCard';
+import { staggerDelay } from '../utils/animation';
 
 // Kept in sync with backend/schemas/transactionSchemas.js and
 // pages/NewTransactionPage.js's own copy of the same lists.
@@ -136,7 +138,7 @@ export default function BulkImportPage() {
             </label>
             <span className="text-gray-500 text-sm">or paste CSV text below</span>
             {csvText && (
-              <button onClick={reset} className="ml-auto flex items-center gap-1 text-gray-400 hover:text-white text-sm">
+              <button onClick={reset} className="ml-auto flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
                 <Trash2 size={14} /> Clear
               </button>
             )}
@@ -229,38 +231,26 @@ export default function BulkImportPage() {
       {result && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
-              <p className="text-gray-400 text-xs sm:text-sm mb-1">Completed</p>
-              <p className="text-xl sm:text-2xl font-bold text-white">{result.summary.completed}</p>
-            </div>
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
-              <p className="text-gray-400 text-xs sm:text-sm mb-1">Flagged</p>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-400">{result.summary.flagged}</p>
-            </div>
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
-              <p className="text-gray-400 text-xs sm:text-sm mb-1">Held for Step-Up</p>
-              <p className="text-xl sm:text-2xl font-bold text-blue-400">{result.summary.held_for_step_up}</p>
-            </div>
-            <div className="bg-[#111820] border border-white/10 rounded-xl p-4 sm:p-6">
-              <p className="text-gray-400 text-xs sm:text-sm mb-1">Failed</p>
-              <p className="text-xl sm:text-2xl font-bold text-red-400">{result.summary.failed}</p>
-            </div>
+            <StatCard title="Completed" value={result.summary.completed} />
+            <StatCard title="Flagged" value={result.summary.flagged} color="text-yellow-400" />
+            <StatCard title="Held for Step-Up" value={result.summary.held_for_step_up} color="text-blue-400" />
+            <StatCard title="Failed" value={result.summary.failed} color="text-red-400" />
           </div>
 
           <div className="bg-[#111820] border border-white/10 rounded-xl">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Results</h2>
-              <button onClick={reset} className="text-purple-400 hover:text-purple-300 text-sm">Import Another Batch</button>
+              <button onClick={reset} className="text-purple-400 hover:text-purple-300 text-sm transition-colors">Import Another Batch</button>
             </div>
             <div className="divide-y divide-white/5">
-              {result.results.map(r => (
-                <div key={r.index} className="p-4 sm:p-6 flex items-center justify-between gap-4">
+              {result.results.map((r, i) => (
+                <div key={r.index} className="p-4 sm:p-6 flex items-center justify-between gap-4 animate-row-in" style={staggerDelay(i)}>
                   <div className="min-w-0">
                     <p className="text-gray-500 text-xs">Row {r.index + 1}</p>
                     {r.error ? (
                       <p className="text-red-400 text-sm flex items-center gap-1"><AlertTriangle size={14} /> {r.error}</p>
                     ) : (
-                      <Link to={`/transactions/${r.transaction.id}`} className="text-white text-sm hover:underline">
+                      <Link to={`/transactions/${r.transaction.id}`} className="text-white text-sm hover:underline transition-colors">
                         {r.transaction.merchant} — ${Number(r.transaction.amount).toFixed(2)}
                       </Link>
                     )}

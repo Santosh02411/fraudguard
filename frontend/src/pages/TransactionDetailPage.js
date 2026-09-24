@@ -269,7 +269,7 @@ export default function TransactionDetailPage() {
             </div>
             {dispute.reason && <p className="text-gray-300 text-sm mb-1">{dispute.reason}</p>}
             {dispute.resolution_note && <p className="text-gray-400 text-xs italic mb-1">&ldquo;{dispute.resolution_note}&rdquo;</p>}
-            <Link to="/disputes" className="text-purple-400 hover:text-purple-300 text-sm">View in Disputes &rarr;</Link>
+            <Link to="/disputes" className="text-purple-400 hover:text-purple-300 text-sm transition-colors">View in Disputes &rarr;</Link>
           </div>
         ) : showDisputeForm ? (
           <form onSubmit={submitDispute} className="mt-3">
@@ -306,7 +306,7 @@ export default function TransactionDetailPage() {
               >
                 {disputeSubmitting ? 'Submitting...' : 'Submit Dispute'}
               </button>
-              <button type="button" onClick={() => setShowDisputeForm(false)} className="text-gray-400 hover:text-white text-sm px-3 py-2">
+              <button type="button" onClick={() => setShowDisputeForm(false)} className="text-gray-400 hover:text-white text-sm px-3 py-2 transition-colors">
                 Cancel
               </button>
             </div>
