@@ -45,8 +45,6 @@ export default function FraudScoreExplanation({ analysis }) {
       </div>
     );
   }
-
-  // Sort so the chart reads top-to-bottom by magnitude of effect, biggest
   // risk driver first, matching how an analyst would scan it.
   const data = [...shap].sort((a, b) => Math.abs(b.shap_value) - Math.abs(a.shap_value));
   const maxAbs = Math.max(...data.map((d) => Math.abs(d.shap_value)), 0.01);
