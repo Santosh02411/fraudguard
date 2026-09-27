@@ -8,9 +8,13 @@ import { AlertCircle, RefreshCw, Inbox } from 'lucide-react';
 export function LoadingState({ label = 'Loading...', rows }) {
   if (rows) {
     // Skeleton rows for table-shaped content — avoids a layout jump when
-    // real data arrives.
+    // real data arrives. The label itself stays present but visually
+    // hidden: screen readers (and this component's existing tests) still
+    // get "Loading transactions...", sighted users just see the shape of
+    // what's coming instead of a spinner + sentence.
     return (
-      <div className="p-6 space-y-3 animate-pulse">
+      <div className="p-6 space-y-3 animate-pulse" role="status">
+        <span className="sr-only">{label}</span>
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className="h-10 bg-white/5 rounded-lg" style={{ animationDelay: `${i * 40}ms` }} />
         ))}

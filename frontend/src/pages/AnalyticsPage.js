@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-import { LoadingState, ErrorState } from '../components/ui/States';
+import { ErrorState } from '../components/ui/States';
 import { BarChart2 } from 'lucide-react';
 import { staggerDelay } from '../utils/animation';
 
@@ -38,8 +38,18 @@ export default function AnalyticsPage() {
   useEffect(() => { load(); }, [load]);
 
   if (loading) return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      <LoadingState label="Loading analytics..." />
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto animate-pulse">
+      <div className="mb-6 sm:mb-8">
+        <div className="h-8 w-40 bg-white/5 rounded-lg mb-2" />
+        <div className="h-4 w-64 bg-white/5 rounded" />
+      </div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-6 h-[314px]" />
+          <div className="bg-[#111820] border border-white/10 rounded-xl p-6 h-[314px]" style={{ animationDelay: '80ms' }} />
+        </div>
+        <div className="bg-[#111820] border border-white/10 rounded-xl p-6 h-[344px]" style={{ animationDelay: '160ms' }} />
+      </div>
     </div>
   );
 

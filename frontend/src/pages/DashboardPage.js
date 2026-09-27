@@ -70,8 +70,22 @@ export default function DashboardPage() {
   }, [socket]);
 
   if (loading) return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      <LoadingState label="Loading dashboard..." />
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto animate-pulse">
+      <div className="mb-6 sm:mb-8">
+        <div className="h-8 w-40 bg-white/5 rounded-lg mb-2" />
+        <div className="h-4 w-56 bg-white/5 rounded" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-[#111820] border border-white/10 rounded-xl p-6 h-[86px]" style={{ animationDelay: `${i * 60}ms` }} />
+        ))}
+      </div>
+      <div className="bg-[#111820] border border-white/10 rounded-xl">
+        <div className="p-6 border-b border-white/10">
+          <div className="h-5 w-40 bg-white/5 rounded" />
+        </div>
+        <LoadingState label="Loading dashboard..." rows={6} />
+      </div>
     </div>
   );
 

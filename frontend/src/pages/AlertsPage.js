@@ -416,7 +416,7 @@ export default function AlertsPage() {
         {bulkError && <p className="text-red-400 text-sm px-6 pt-3">{bulkError}</p>}
 
         {loading ? (
-          <LoadingState label="Loading alerts..." />
+          <LoadingState label="Loading alerts..." rows={5} />
         ) : error ? (
           <ErrorState message={error} onRetry={() => loadAlerts(page)} />
         ) : alerts.length === 0 ? (

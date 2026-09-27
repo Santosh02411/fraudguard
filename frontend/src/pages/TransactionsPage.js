@@ -207,7 +207,7 @@ export default function TransactionsPage() {
 
       <div className="bg-[#111820] border border-white/10 rounded-xl">
         {loading ? (
-          <LoadingState label="Loading transactions..." />
+          <LoadingState label="Loading transactions..." rows={6} />
         ) : error ? (
           <ErrorState message={error} onRetry={() => load(page)} />
         ) : transactions.length === 0 ? (

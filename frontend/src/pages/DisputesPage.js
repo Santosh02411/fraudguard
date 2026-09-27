@@ -355,7 +355,7 @@ export default function DisputesPage() {
         </div>
 
         {loading ? (
-          <LoadingState label="Loading disputes..." />
+          <LoadingState label="Loading disputes..." rows={5} />
         ) : error ? (
           <ErrorState message={error} onRetry={() => load(status)} />
         ) : disputes.length === 0 ? (
