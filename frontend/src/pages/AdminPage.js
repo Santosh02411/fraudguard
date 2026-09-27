@@ -347,8 +347,27 @@ export default function AdminPage() {
   };
 
   if (loading) return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      <LoadingState label="Loading admin panel..." />
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto animate-pulse" role="status">
+      <span className="sr-only">Loading admin panel...</span>
+      <div className="mb-6 sm:mb-8">
+        <div className="h-8 w-44 bg-white/5 rounded-lg mb-2" />
+        <div className="h-4 w-60 bg-white/5 rounded" />
+      </div>
+      <div className="flex items-center gap-2 mb-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-9 w-24 bg-white/5 rounded-lg" style={{ animationDelay: `${i * 40}ms` }} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-[#111820] border border-white/10 rounded-xl h-[86px]" style={{ animationDelay: `${i * 60}ms` }} />
+        ))}
+      </div>
+      <div className="bg-[#111820] border border-white/10 rounded-xl p-6 space-y-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-10 bg-white/5 rounded-lg" style={{ animationDelay: `${i * 40}ms` }} />
+        ))}
+      </div>
     </div>
   );
 
@@ -746,7 +765,7 @@ export default function AdminPage() {
       {activeTab === 'mlops' && (
         <div className="space-y-6">
           {mlLoading ? (
-            <div className="bg-[#111820] border border-white/10 rounded-xl"><LoadingState label="Loading model ops..." /></div>
+            <div className="bg-[#111820] border border-white/10 rounded-xl"><LoadingState label="Loading model ops..." rows={4} /></div>
           ) : mlError ? (
             <div className="bg-[#111820] border border-white/10 rounded-xl"><ErrorState message={mlError} onRetry={loadMlOps} /></div>
           ) : (

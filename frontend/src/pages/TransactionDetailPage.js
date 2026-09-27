@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../context/AuthContext';
 import FraudScoreExplanation from '../components/FraudScoreExplanation';
 import { ArrowLeft, CheckCircle, AlertTriangle, XCircle, Scale, ShieldQuestion } from 'lucide-react';
-import { LoadingState, ErrorState } from '../components/ui/States';
+import { ErrorState } from '../components/ui/States';
 
 const RISK_STYLE = {
   low: { icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/40' },
@@ -123,7 +123,29 @@ export default function TransactionDetailPage() {
   };
 
   if (loading) return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto"><LoadingState label="Loading transaction..." /></div>
+    <div className="p-4 sm:p-8 max-w-3xl mx-auto animate-pulse" role="status">
+      <span className="sr-only">Loading transaction...</span>
+      <div className="h-4 w-40 bg-white/5 rounded mb-6" />
+      <div className="border border-white/10 rounded-xl p-5 sm:p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="h-6 w-48 bg-white/5 rounded mb-2" />
+            <div className="h-3 w-36 bg-white/5 rounded" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white/5 rounded-lg h-[70px]" style={{ animationDelay: `${i * 60}ms` }} />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+          <div className="h-10 bg-white/5 rounded" />
+          <div className="h-10 bg-white/5 rounded" style={{ animationDelay: '60ms' }} />
+        </div>
+        <div className="h-32 bg-white/5 rounded-lg" style={{ animationDelay: '120ms' }} />
+      </div>
+    </div>
   );
   if (error) return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto"><ErrorState message={error} onRetry={load} /></div>
