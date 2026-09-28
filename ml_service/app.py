@@ -85,10 +85,23 @@ def _load_version(version: str):
         metadata = json.load(f)
     background = np.load(os.path.join(version_dir, "background_sample.npy"))
 
-    # shap.Explainer auto-selects TreeExplainer/LinearExplainer/etc. based
-    # on the model type — same call works for LogisticRegression,
-    # RandomForest, and XGBoost.
-    explainer = shap.Explainer(model.predict_proba, background)
+    # Prefer shap.TreeExplainer for tree-based models (RandomForest,
+    # XGBoost) — it reads the tree structure directly, so it's both
+    # ~200x faster per call AND has no lazy warm-up cost (unlike the
+    # function-wrapped shap.Explainer(model.predict_proba, background)
+    # below, which resolves to a PermutationExplainer for a black-box
+    # callable: its first invocation alone was measured at ~6s, long
+    # enough to blow past the Node backend's 2s ML_SERVICE_TIMEOUT_MS
+    # and silently degrade every early request to the rule-engine
+    # fallback after every deploy/restart). TreeExplainer only supports
+    # tree ensembles, so logistic_regression (or any future non-tree
+    # model type) falls back to the generic explainer, which is the
+    # correct/only option there — just no longer the default for
+    # everyone.
+    try:
+        explainer = shap.TreeExplainer(model)
+    except Exception:
+        explainer = shap.Explainer(model.predict_proba, background)
 
     # Drift baseline is optional — older registry versions trained before
     # this feature existed won't have one; GET /model/drift handles that
@@ -156,6 +169,22 @@ def startup():
         _load_current()
     except Exception as e:
         print(f"WARNING: failed to load model at startup: {e}")
+        return
+
+    # Defense-in-depth alongside the TreeExplainer fix above: pay any
+    # remaining one-time lazy-init cost (SHAP, sklearn/xgboost internals)
+    # here, before /health reports ready and before any real traffic can
+    # hit it, rather than on whichever live request happens to arrive
+    # first. Best-effort — a warm-up failure shouldn't block startup;
+    # the real error (if any) will surface on the first real /predict.
+    try:
+        background = np.load(os.path.join(REGISTRY_DIR, STATE["version"], "background_sample.npy"))
+        scaled = background[:1]  # already-scaled sample row — saved as X_train_scaled by train_model.py
+        STATE["model"].predict_proba(scaled)
+        _shap_top_factors(scaled, STATE["feature_columns"])
+        print("Model + explainer warmed up.")
+    except Exception as e:
+        print(f"WARNING: warm-up prediction failed (not fatal, will retry on first real request): {e}")
 
 
 class TransactionIn(BaseModel):
