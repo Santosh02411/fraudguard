@@ -1,0 +1,12 @@
+{
+  "version": "v3",
+  "trained_at": "2026-09-29T08:34:47.238051+00:00",
+  "best_model_type": "random_forest",
+  "pr_auc": 0.968,
+  "previous_promoted_pr_auc": 0.943,
+  "promoted": true,
+  "n_rows": 156561,
+  "n_features": 43,
+  "fraud_rate": 0.0243,
+  "notes": "monthly retrain"
+}
